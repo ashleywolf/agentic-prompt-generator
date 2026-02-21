@@ -582,6 +582,17 @@ a:hover {
   color: var(--accent-blue);
 }
 
+/* Customize text field (always visible) */
+.customize-field {
+  margin-top: 1rem;
+}
+.customize-field label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.4rem;
+}
+
 /* Format toggle */
 .format-toggle {
   display: grid;

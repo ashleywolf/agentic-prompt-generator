@@ -130,13 +130,10 @@
       });
     });
 
-    // Step 4: capability checkboxes (no selection required — skip is fine)
-    document.querySelectorAll('input[name="capability"]').forEach(function (cb) {
+    // Step 4: extras (optional checkboxes, no validation needed)
+    document.querySelectorAll('input[name="extra"]').forEach(function (cb) {
       cb.addEventListener('change', function () {
         updateCardSelection('#data-options', 'checkbox');
-        // Show description field if any capability is checked
-        var anyChecked = hasChecked('capability');
-        document.getElementById('data-description-field').classList.toggle('visible', anyChecked);
       });
     });
   }
@@ -187,22 +184,9 @@
     updateCardSelection('#output-options', 'checkbox');
     document.getElementById('next-3').disabled = !hasChecked('output');
 
-    // Pre-select capabilities based on archetype
-    document.querySelectorAll('input[name="capability"]').forEach(function (cb) { cb.checked = false; });
-    var preselect = [];
-    if (id === 'dependency-monitor' || id === 'upstream-monitor') {
-      preselect = ['pre-steps', 'bash'];
-    } else if (id === 'status-report') {
-      preselect = ['pre-steps', 'github-toolsets'];
-    } else if (id === 'code-improvement' || id === 'documentation-updater') {
-      preselect = ['bash'];
-    }
-    preselect.forEach(function (cap) {
-      var cb = document.querySelector('input[name="capability"][value="' + cap + '"]');
-      if (cb) cb.checked = true;
-    });
+    // Reset extras
+    document.querySelectorAll('input[name="extra"]').forEach(function (cb) { cb.checked = false; });
     updateCardSelection('#data-options', 'checkbox');
-    document.getElementById('data-description-field').classList.toggle('visible', preselect.length > 0);
   }
 
   // ── Gather answers ─────────────────────────────────────────────────────────
@@ -212,18 +196,40 @@
     document.querySelectorAll('input[name="trigger"]:checked').forEach(function (cb) { triggers.push(cb.value); });
     var outputs = [];
     document.querySelectorAll('input[name="output"]:checked').forEach(function (cb) { outputs.push(cb.value); });
-    var capabilities = [];
-    document.querySelectorAll('input[name="capability"]:checked').forEach(function (cb) { capabilities.push(cb.value); });
+    var extras = [];
+    document.querySelectorAll('input[name="extra"]:checked').forEach(function (cb) { extras.push(cb.value); });
+    var archetypeId = arch ? arch.value : 'custom';
 
     return {
-      archetype: arch ? arch.value : 'custom',
+      archetype: archetypeId,
       customDescription: document.getElementById('custom-description').value.trim(),
       triggers: triggers,
       outputs: outputs,
-      capabilities: capabilities,
-      needsData: capabilities.indexOf('pre-steps') !== -1,
+      extras: extras,
+      needsData: inferNeedsPreSteps(archetypeId),
       dataDescription: document.getElementById('data-description').value.trim()
     };
+  }
+
+  function inferNeedsPreSteps(archetype) {
+    // These archetypes deal with lots of data — auto-add pre-steps
+    return ['status-report', 'dependency-monitor', 'upstream-monitor'].indexOf(archetype) !== -1;
+  }
+
+  function inferCapabilities(archetype) {
+    // Auto-infer what tools/capabilities the archetype needs
+    var caps = { preSteps: false, bash: false, githubToolsets: false };
+    switch (archetype) {
+      case 'status-report':
+        caps.preSteps = true; caps.githubToolsets = true; break;
+      case 'dependency-monitor':
+      case 'upstream-monitor':
+        caps.preSteps = true; caps.bash = true; break;
+      case 'code-improvement':
+      case 'documentation-updater':
+        caps.bash = true; break;
+    }
+    return caps;
   }
 
   // ── Generate prompt ────────────────────────────────────────────────────────
@@ -302,27 +308,25 @@
     // Trigger config YAML
     var triggerYaml = buildTriggerYaml(answers.triggers);
 
-    // Frontmatter
-    var caps = answers.capabilities || [];
+    // Frontmatter — auto-infer capabilities from archetype
+    var inferred = inferCapabilities(answers.archetype);
+    var extras = answers.extras || [];
     var fm = '---\n';
     fm += 'name: ' + name + '\n';
     fm += 'description: ' + desc + '\n';
     fm += 'on:\n' + triggerYaml;
 
-    // Tools section — merge output tools + capability tools
+    // Tools section
     fm += 'tools:\n';
     tools.forEach(function (t) { fm += '  - ' + t + '\n'; });
-    if (caps.indexOf('web-search') !== -1) {
-      fm += '  web-fetch:\n';
-    }
-    if (caps.indexOf('bash') !== -1) {
+    if (inferred.bash) {
       fm += '  bash: true\n';
     }
-    if (caps.indexOf('github-toolsets') !== -1) {
+    if (inferred.githubToolsets) {
       fm += '  github:\n';
       fm += '    toolsets: [repos, issues, pull_requests, actions, code_security, discussions]\n';
     }
-    if (caps.indexOf('memory') !== -1) {
+    if (extras.indexOf('memory') !== -1) {
       fm += '  cache-memory:\n';
     }
 
@@ -330,37 +334,14 @@
     safeOutputs.forEach(function (s) { fm += '  - ' + s + '\n'; });
     fm += 'timeout-minutes: ' + timeout + '\n';
 
-    // MCP servers
-    if (caps.indexOf('web-search') !== -1) {
-      fm += 'mcp-servers:\n';
-      fm += '  tavily:\n';
-      fm += '    command: npx\n';
-      fm += '    args: ["-y", "@tavily/mcp-server"]\n';
-      fm += '    env:\n';
-      fm += '      TAVILY_API_KEY: "${{ secrets.TAVILY_API_KEY }}"\n';
-      fm += '    allowed: ["search", "search_news"]\n';
-    }
-    if (caps.indexOf('mcp') !== -1 && caps.indexOf('web-search') === -1) {
-      fm += 'mcp-servers:\n';
-    }
-    if (caps.indexOf('mcp') !== -1) {
-      fm += '  # Add your MCP server config here — see https://github.github.com/gh-aw/guides/mcps/\n';
-      fm += '  # example:\n';
-      fm += '  #   container: "mcp/your-service"\n';
-      fm += '  #   env:\n';
-      fm += '  #     API_KEY: "${{ secrets.YOUR_API_KEY }}"\n';
-      fm += '  #   allowed: ["tool1", "tool2"]\n';
-    }
-
-    // Network permissions for web search
-    if (caps.indexOf('web-search') !== -1) {
-      fm += 'network:\n';
-      fm += '  allowed:\n';
-      fm += '    - defaults\n';
-      fm += '    - "*.tavily.com"\n';
-    }
-
     fm += '---\n\n';
+
+    // Add project context if provided
+    var context = answers.dataDescription;
+    var contextSection = '';
+    if (context) {
+      contextSection = '## Project Context\n\n' + context + '\n\n';
+    }
 
     // Body — varies by archetype
     var body = '';
@@ -393,7 +374,7 @@
         body = buildCustom(answers, label);
     }
 
-    return fm + body;
+    return fm + body + contextSection;
   }
 
   function buildTriggerYaml(triggers) {
@@ -454,29 +435,16 @@
     prompt += '- Triggers: ' + triggersReadable + '\n';
     prompt += '- Allowed outputs: ' + outputsReadable + '\n';
 
-    var caps = answers.capabilities || [];
-    if (caps.indexOf('pre-steps') !== -1) {
-      prompt += '- Add a pre-step to fetch data before the agent runs';
-      if (answers.dataDescription) prompt += ': ' + answers.dataDescription;
-      prompt += '\n';
+    // Auto-inferred capabilities communicated to the agent
+    if (answers.needsData) {
+      prompt += '- Add a pre-step to fetch external data before the agent runs\n';
     }
-    if (caps.indexOf('web-search') !== -1) {
-      prompt += '- Add Tavily web search via MCP server (see https://github.github.com/gh-aw/guides/web-search/)\n';
-    }
-    if (caps.indexOf('mcp') !== -1) {
-      prompt += '- Connect to external services via MCP servers (see https://github.github.com/gh-aw/guides/mcps/)\n';
-    }
-    if (caps.indexOf('github-toolsets') !== -1) {
-      prompt += '- Enable additional GitHub toolsets: actions, code_security, discussions\n';
-    }
-    if (caps.indexOf('memory') !== -1) {
+    var extras = answers.extras || [];
+    if (extras.indexOf('memory') !== -1) {
       prompt += '- Add cache-memory tool for persistent memory across runs\n';
     }
-    if (caps.indexOf('bash') !== -1) {
-      prompt += '- Enable bash tool for shell command execution\n';
-    }
-    if (answers.dataDescription && caps.indexOf('pre-steps') === -1) {
-      prompt += '- Additional context: ' + answers.dataDescription + '\n';
+    if (answers.dataDescription) {
+      prompt += '- Additional project context: ' + answers.dataDescription + '\n';
     }
 
     prompt += '\nThe workflow should be saved to .github/workflows/' + name + '.md';
@@ -489,19 +457,24 @@
     if (!panel) return;
 
     var html = '<h3>Next steps</h3>';
+    var name = workflowName(gatherAnswers().archetype, gatherAnswers().customDescription);
 
     if (format === 'workflow') {
-      html += step(1, 'Download the <code>.md</code> file and save it to <code>.github/workflows/</code> in your repository');
-      html += step(2, 'Install the <a href="https://cli.github.com" target="_blank">GitHub CLI</a> and the Agentic Workflows extension: <code>gh extension install github/gh-aw</code>');
-      html += step(3, 'Compile the workflow: <code>gh aw compile</code>');
-      html += step(4, 'Commit both the <code>.md</code> and generated <code>.lock.yml</code> files, then push');
-      html += step(5, 'Trigger a run from the Actions tab or with <code>gh aw run ' + (workflowName(gatherAnswers().archetype, gatherAnswers().customDescription)) + '</code>');
+      html += step(1, 'Make sure <a href="https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository" target="_blank">GitHub Actions is enabled</a> on your repository');
+      html += step(2, 'Install the <a href="https://cli.github.com" target="_blank">GitHub CLI</a> and the Agentic Workflows extension:<br><code>gh extension install github/gh-aw</code>');
+      html += step(3, 'Download the <code>.md</code> file and save it to <code>.github/workflows/' + name + '.md</code>');
+      html += step(4, 'Set up your AI engine secret — run <code>gh aw add-wizard</code> to configure <a href="https://github.github.com/gh-aw/reference/engines/" target="_blank">Copilot, Claude, or Codex</a>');
+      html += step(5, 'Compile the workflow to generate the Actions YAML:<br><code>gh aw compile</code>');
+      html += step(6, 'Commit both files and push:<br><code>git add .github/workflows/' + name + '.md .github/workflows/' + name + '.lock.yml && git push</code>');
+      html += step(7, 'Trigger a run from the Actions tab or with:<br><code>gh aw run ' + name + '</code>');
     } else {
-      html += step(1, 'Copy the prompt above');
-      html += step(2, 'Open your coding agent — <a href="https://code.visualstudio.com/docs/copilot/agents/overview" target="_blank">VS Code Agent Mode</a>, GitHub Copilot, Claude, or Codex');
-      html += step(3, 'Paste the prompt and let the agent create the workflow file for you');
-      html += step(4, 'Review the generated <code>.md</code> file in <code>.github/workflows/</code>');
-      html += step(5, 'Compile with <code>gh aw compile</code>, commit, and push');
+      html += step(1, 'Make sure <a href="https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository" target="_blank">GitHub Actions is enabled</a> on your repository');
+      html += step(2, 'Install the <a href="https://cli.github.com" target="_blank">GitHub CLI</a> and the Agentic Workflows extension:<br><code>gh extension install github/gh-aw</code>');
+      html += step(3, 'Copy the prompt above and paste it into your coding agent — <a href="https://code.visualstudio.com/docs/copilot/agents/overview" target="_blank">VS Code Agent Mode</a>, Copilot, Claude, or Codex');
+      html += step(4, 'The agent will create a <code>.md</code> file in <code>.github/workflows/</code> — review it');
+      html += step(5, 'Set up your AI engine secret with <code>gh aw add-wizard</code> if you haven\'t already');
+      html += step(6, 'Compile, commit, and push:<br><code>gh aw compile && git add .github/workflows/ && git push</code>');
+      html += step(7, 'Trigger a run from the Actions tab or with:<br><code>gh aw run ' + name + '</code>');
     }
 
     html += '<div style="margin-top:0.75rem;font-size:0.8rem;color:var(--text-muted);">' +

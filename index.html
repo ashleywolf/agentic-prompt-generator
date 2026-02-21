@@ -38,7 +38,7 @@
       </div>
       <div class="progress-step" data-step="4">
         <div class="step-indicator">4</div>
-        <div class="step-label">Tools</div>
+        <div class="step-label">Customize</div>
       </div>
       <div class="progress-step" data-step="5">
         <div class="step-indicator">5</div>
@@ -235,57 +235,22 @@
       </div>
     </section>
 
-    <!-- Step 4: Data & capabilities -->
+    <!-- Step 4: Customize -->
     <section class="wizard-step" id="step-4">
-      <h2 class="step-title">What data and tools does it need?</h2>
-      <p class="step-description">Select any extra capabilities beyond the default GitHub context.</p>
+      <h2 class="step-title">Any extra context?</h2>
+      <p class="step-description">Optional — add details to make the workflow fit your project. Leave blank for a solid default.</p>
       <div class="option-group" id="data-options">
         <label class="option-card">
-          <input type="checkbox" name="capability" value="pre-steps">
+          <input type="checkbox" name="extra" value="memory">
           <div class="option-info">
-            <div class="option-label">Pre-fetch data with a script</div>
-            <div class="option-desc">Run shell commands before the agent starts — API calls, builds, data collection</div>
-          </div>
-        </label>
-        <label class="option-card">
-          <input type="checkbox" name="capability" value="web-search">
-          <div class="option-info">
-            <div class="option-label">Search the web</div>
-            <div class="option-desc">Add Tavily web search to look up docs, articles, or current information</div>
-          </div>
-        </label>
-        <label class="option-card">
-          <input type="checkbox" name="capability" value="mcp">
-          <div class="option-info">
-            <div class="option-label">Connect to external services (MCP)</div>
-            <div class="option-desc">Slack, Notion, databases, or any MCP-compatible service</div>
-          </div>
-        </label>
-        <label class="option-card">
-          <input type="checkbox" name="capability" value="github-toolsets">
-          <div class="option-info">
-            <div class="option-label">Additional GitHub data</div>
-            <div class="option-desc">Actions runs, code scanning alerts, discussions, projects, and more</div>
-          </div>
-        </label>
-        <label class="option-card">
-          <input type="checkbox" name="capability" value="memory">
-          <div class="option-info">
-            <div class="option-label">Persistent memory across runs</div>
-            <div class="option-desc">Remember context between workflow executions for trends and history</div>
-          </div>
-        </label>
-        <label class="option-card">
-          <input type="checkbox" name="capability" value="bash">
-          <div class="option-info">
-            <div class="option-label">Run shell commands</div>
-            <div class="option-desc">Execute build tools, linters, test runners, or custom scripts</div>
+            <div class="option-label">🧠 Remember across runs</div>
+            <div class="option-desc">Track trends and context between workflow executions</div>
           </div>
         </label>
       </div>
-      <div class="conditional-field" id="data-description-field">
-        <label for="data-description">Describe what data or services you need:</label>
-        <textarea class="text-area" id="data-description" placeholder="e.g., Fetch latest releases from an upstream repo, query a Notion database for project status, search the web for CVE details…"></textarea>
+      <div class="customize-field">
+        <label for="data-description">Anything specific the workflow should know about your project?</label>
+        <textarea class="text-area" id="data-description" placeholder="e.g., We use a monorepo with packages in /packages/*, the main API is in /src/api/, we follow conventional commits…"></textarea>
       </div>
       <div class="step-nav">
         <button class="btn btn-secondary" id="prev-4">← Back</button>
