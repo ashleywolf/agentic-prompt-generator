@@ -25,6 +25,7 @@ Usage:
 """
 
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -37,6 +38,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 API_DELAY = 0.3
+MIN_N = 20  # minimum sample size for reported comparisons
 GH_AFFILIATED = {
     "github", "githubnext", "microsoft", "Azure", "azure",
     "dotnet", "MicrosoftDocs", "microsoftgraph", "OfficeDev",
@@ -88,6 +90,40 @@ def parse_frontmatter(content):
             val = val.strip()
             if val:
                 fm[key] = val
+    # Parse engine block: handle `engine: { id: copilot, model: X }`
+    # and multi-line engine declarations
+    engine_match = re.search(
+        r'engine:\s*\{([^}]+)\}', fm_text, re.DOTALL
+    )
+    if engine_match:
+        block = engine_match.group(1)
+        for kv in block.split(","):
+            kv = kv.strip()
+            if ":" in kv:
+                k, _, v = kv.partition(":")
+                k, v = k.strip(), v.strip()
+                if k == "id":
+                    fm["engine_id"] = v
+                elif k == "model":
+                    fm["engine_model"] = v
+    # Also handle multi-line:
+    #   engine:
+    #     id: copilot
+    #     model: claude-opus-4.5
+    if "engine_id" not in fm:
+        lines = fm_text.split("\n")
+        in_engine = False
+        for line in lines:
+            stripped = line.strip()
+            if stripped.startswith("engine:") and not stripped.replace("engine:", "").strip():
+                in_engine = True
+                continue
+            if in_engine and stripped.startswith("id:"):
+                fm["engine_id"] = stripped.split(":", 1)[1].strip()
+            elif in_engine and stripped.startswith("model:"):
+                fm["engine_model"] = stripped.split(":", 1)[1].strip()
+            elif in_engine and not stripped.startswith("-") and ":" in stripped and not line.startswith(" "):
+                in_engine = False
     return fm, body
 
 
@@ -125,27 +161,27 @@ def extract_features(content, fm, body):
                 "```markdown", "```json", "respond with",
             ]
         ),
-        "has_rate_limit_awareness": any(
-            kw in body_lower for kw in [
-                "rate limit", "pagination", "delay", "throttl", "per_page",
-                "sleep", "api_delay",
-            ]
-        ),
-        "has_error_handling": any(
-            kw in body_lower for kw in [
-                "fallback", "retry", "error", "fail", "catch", "handle",
-                "if no results", "if empty",
-            ]
-        ),
-        "has_do_not_instructions": any(
-            kw in body_lower for kw in [
-                "do not", "don't", "never", "avoid", "must not",
-            ]
-        ),
+        # Tightened: require instructional context, not just any mention
+        "has_rate_limit_awareness": bool(re.search(
+            r'(rate.?limit|pagina\w+|per_page|api.?delay|between.+calls|sequential.+search|add.+delay|wait.+between|sleep\s+\d)',
+            body_lower
+        )) if body else False,
+        # Tightened: require action-oriented error handling, not just mentions
+        "has_error_handling": bool(re.search(
+            r'(if.{0,20}(fail|error|empty|no results|not found)|fallback.{0,15}(to|strategy)|retry.{0,10}(if|when|on)|handle.{0,10}(error|failure)|gracefully)',
+            body_lower
+        )) if body else False,
+        "has_do_not_instructions": bool(re.search(
+            r'(do not|don\'t|must not|never|avoid)\s+(use|search|query|call|make|create|generate|modify|delete|include)',
+            body_lower
+        )) if body else False,
         "mentions_safe_outputs": "safe-output" in body_lower or "safe_output" in body_lower,
         # Frontmatter-derived
         "timeout_minutes": _parse_int(fm.get("timeout-minutes", fm.get("timeout_minutes"))),
         "uses_bash": "bash" in content[:500].lower() if content else False,
+        # Engine (from improved parser)
+        "parsed_engine": fm.get("engine_id", fm.get("engine", "")).strip() or None,
+        "parsed_model": fm.get("engine_model", fm.get("model", "")).strip() or None,
     }
 
 
@@ -247,8 +283,26 @@ def enrich(scan_data, cache_dir, skip_fetch=False):
                 features = extract_features(source, fm, body)
                 record.update(features)
                 record["source_fetched"] = True
+                # Template dedup: hash the prompt body
+                record["prompt_hash"] = hashlib.md5(body.encode()).hexdigest()[:12] if body else None
+                # Override engine/model with parsed values if available
+                if features.get("parsed_engine"):
+                    record["engine"] = features["parsed_engine"]
+                if features.get("parsed_model"):
+                    record["model"] = features["parsed_model"]
             else:
                 record["source_fetched"] = False
+                record["prompt_hash"] = None
+
+            # Repo maturity classification
+            stars = record["stars"]
+            has_desc = bool(record.get("repo_description"))
+            if stars >= 100:
+                record["repo_maturity"] = "production"
+            elif stars >= 5 or has_desc:
+                record["repo_maturity"] = "hobby"
+            else:
+                record["repo_maturity"] = "test"
 
             enriched.append(record)
 
@@ -257,6 +311,37 @@ def enrich(scan_data, cache_dir, skip_fetch=False):
                 print(f"  {done}/{total} workflows processed ({fetched} fetched, {cached} cached)")
 
     print(f"✅ Enriched {len(enriched)} workflows ({fetched} fetched, {cached} cached)")
+
+    # Template dedup: cluster by prompt hash
+    hash_groups = defaultdict(list)
+    for w in enriched:
+        h = w.get("prompt_hash")
+        if h:
+            hash_groups[h].append(w)
+
+    # Assign template cluster IDs
+    cluster_id = 0
+    template_map = {}  # hash -> cluster_id
+    for h, members in hash_groups.items():
+        if len(members) >= 2:
+            template_map[h] = f"template-{cluster_id}"
+            cluster_id += 1
+        else:
+            template_map[h] = None
+
+    for w in enriched:
+        h = w.get("prompt_hash")
+        w["template_cluster"] = template_map.get(h)
+        w["is_template_clone"] = template_map.get(h) is not None
+
+    clone_count = sum(1 for w in enriched if w["is_template_clone"])
+    unique_templates = sum(1 for v in template_map.values() if v is not None)
+    print(f"📋 Template dedup: {clone_count} clones in {unique_templates} template families, {len(enriched)-clone_count} unique")
+
+    # Repo maturity distribution
+    maturity = Counter(w.get("repo_maturity", "unknown") for w in enriched)
+    print(f"🏗️  Repo maturity: {dict(maturity)}")
+
     return enriched
 
 
@@ -268,12 +353,24 @@ def analyze_success_predictors(workflows):
     """Statistical analysis of what predicts workflow success."""
     # Filter to workflows with success data and source
     with_data = [w for w in workflows if w["success_rate"] is not None and w.get("source_fetched")]
+    # Also create deduplicated set (one per template cluster)
+    seen_hashes = set()
+    deduped = []
+    for w in with_data:
+        h = w.get("prompt_hash")
+        if h and h in seen_hashes:
+            continue
+        if h:
+            seen_hashes.add(h)
+        deduped.append(w)
+
     if len(with_data) < 20:
         return "Insufficient data for success predictor analysis."
 
     lines = []
     lines.append("## 📊 Success Predictors: What Configuration Matters?\n")
-    lines.append(f"**Sample size:** {len(with_data)} workflows with run data + source\n")
+    lines.append(f"**Full dataset:** {len(with_data)} workflows with run data + source")
+    lines.append(f"**Deduplicated:** {len(deduped)} unique prompts (template clones removed)\n")
 
     # Binary features vs success rate
     binary_features = [
@@ -282,31 +379,65 @@ def analyze_success_predictors(workflows):
         ("has_examples", "Code block examples"),
         ("has_format_spec", "Output format spec"),
         ("has_rate_limit_awareness", "Rate limit awareness"),
-        ("has_error_handling", "Error handling mentions"),
+        ("has_error_handling", "Error handling"),
         ("has_do_not_instructions", "Negative constraints (DO NOT)"),
         ("uses_bash", "Bash tool enabled"),
     ]
 
     lines.append("### Binary Feature Impact on Success Rate\n")
-    lines.append("| Feature | With (n) | Without (n) | Δ Success Rate | Effect |")
-    lines.append("|---------|----------|-------------|----------------|--------|")
+    lines.append("| Feature | With (n) | Without (n) | Δ | p-value | Confidence | Dedup Δ |")
+    lines.append("|---------|----------|-------------|---|---------|------------|---------|")
 
     effects = []
     for feat_key, feat_name in binary_features:
-        with_feat = [w for w in with_data if w.get(feat_key)]
-        without_feat = [w for w in with_data if not w.get(feat_key)]
-        if len(with_feat) < 5 or len(without_feat) < 5:
+        with_feat = [w["success_rate"] for w in with_data if w.get(feat_key)]
+        without_feat = [w["success_rate"] for w in with_data if not w.get(feat_key)]
+        with_dedup = [w["success_rate"] for w in deduped if w.get(feat_key)]
+        without_dedup = [w["success_rate"] for w in deduped if not w.get(feat_key)]
+
+        if len(with_feat) < MIN_N or len(without_feat) < MIN_N:
             continue
-        avg_with = sum(w["success_rate"] for w in with_feat) / len(with_feat)
-        avg_without = sum(w["success_rate"] for w in without_feat) / len(without_feat)
+
+        avg_with = sum(with_feat) / len(with_feat)
+        avg_without = sum(without_feat) / len(without_feat)
         delta = avg_with - avg_without
-        emoji = "🟢" if delta > 0.05 else "🔴" if delta < -0.05 else "⚪"
+
+        # Mann-Whitney U test
+        p_val = _mann_whitney_u(with_feat, without_feat)
+
+        # Dedup delta
+        dedup_delta = None
+        if len(with_dedup) >= 10 and len(without_dedup) >= 10:
+            dedup_delta = sum(with_dedup)/len(with_dedup) - sum(without_dedup)/len(without_dedup)
+
+        # Confidence level
+        if p_val is not None and p_val < 0.01 and len(with_feat) >= 50:
+            conf = "🟢 Strong"
+        elif p_val is not None and p_val < 0.05 and len(with_feat) >= MIN_N:
+            conf = "🟡 Moderate"
+        else:
+            conf = "⚪ Weak"
+
+        dedup_str = f"{dedup_delta:+.0%}" if dedup_delta is not None else "—"
+        p_str = f"{p_val:.3f}" if p_val is not None else "—"
+
         lines.append(
             f"| {feat_name} | {avg_with:.0%} ({len(with_feat)}) | "
             f"{avg_without:.0%} ({len(without_feat)}) | "
-            f"{delta:+.0%} | {emoji} |"
+            f"{delta:+.0%} | {p_str} | {conf} | {dedup_str} |"
         )
-        effects.append((feat_name, delta, len(with_feat), len(without_feat)))
+        effects.append((feat_name, delta, len(with_feat), len(without_feat), p_val, dedup_delta))
+
+    # Repo maturity stratification
+    lines.append("\n### Success Rate by Repo Maturity\n")
+    lines.append("| Maturity | Avg Success | Count | Dedup Count |")
+    lines.append("|----------|-------------|-------|-------------|")
+    for mat in ["production", "hobby", "test"]:
+        subset = [w for w in with_data if w.get("repo_maturity") == mat]
+        dedup_subset = [w for w in deduped if w.get("repo_maturity") == mat]
+        if subset:
+            avg = sum(w["success_rate"] for w in subset) / len(subset)
+            lines.append(f"| {mat} | {avg:.0%} | {len(subset)} | {len(dedup_subset)} |")
 
     # Numeric feature correlations (Spearman rank approximation)
     numeric_features = [
@@ -387,10 +518,28 @@ def analyze_success_predictors(workflows):
     # Top takeaways
     lines.append("\n### Key Takeaways\n")
     if effects:
-        sorted_effects = sorted(effects, key=lambda x: -abs(x[1]))
-        for name, delta, n_with, n_without in sorted_effects[:5]:
-            direction = "increases" if delta > 0 else "decreases"
-            lines.append(f"- **{name}** {direction} success rate by {abs(delta):.0%} (n={n_with} vs {n_without})")
+        # Only report statistically significant findings
+        sig_effects = [(n, d, nw, nwo, p, dd) for n, d, nw, nwo, p, dd in effects if p is not None and p < 0.05]
+        if sig_effects:
+            lines.append("**Statistically significant findings (p < 0.05):**\n")
+            sorted_effects = sorted(sig_effects, key=lambda x: -abs(x[1]))
+            for name, delta, n_with, n_without, p_val, dedup_d in sorted_effects:
+                direction = "increases" if delta > 0 else "decreases"
+                survives = ""
+                if dedup_d is not None:
+                    if (delta > 0 and dedup_d > 0) or (delta < 0 and dedup_d < 0):
+                        survives = " ✅ survives dedup"
+                    else:
+                        survives = " ⚠️ reverses after dedup"
+                lines.append(f"- **{name}** {direction} success rate by {abs(delta):.0%} (p={p_val:.3f}, n={n_with} vs {n_without}){survives}")
+        else:
+            lines.append("⚠️ No features reached statistical significance at p < 0.05 — findings are directional only.")
+
+        nonsig = [(n, d, nw, nwo) for n, d, nw, nwo, p, dd in effects if p is None or p >= 0.05]
+        if nonsig:
+            lines.append("\n**Directional only (not significant):**\n")
+            for name, delta, n_with, n_without in sorted(nonsig, key=lambda x: -abs(x[1]))[:3]:
+                lines.append(f"- {name}: {delta:+.0%} (n={n_with} vs {n_without})")
 
     return "\n".join(lines)
 
@@ -408,6 +557,60 @@ def _pearson(xs, ys):
     if dx == 0 or dy == 0:
         return None
     return num / (dx * dy)
+
+
+def _mann_whitney_u(xs, ys):
+    """Mann-Whitney U test (normal approximation for large samples).
+    Returns p-value or None if samples too small."""
+    nx, ny = len(xs), len(ys)
+    if nx < 10 or ny < 10:
+        return None
+
+    # Rank all values
+    combined = [(v, 0) for v in xs] + [(v, 1) for v in ys]
+    combined.sort(key=lambda x: x[0])
+
+    # Assign ranks (handle ties with average rank)
+    ranks = [0.0] * len(combined)
+    i = 0
+    while i < len(combined):
+        j = i
+        while j < len(combined) and combined[j][0] == combined[i][0]:
+            j += 1
+        avg_rank = (i + j + 1) / 2  # 1-indexed average
+        for k in range(i, j):
+            ranks[k] = avg_rank
+        i = j
+
+    # Sum ranks for group 0 (xs)
+    r1 = sum(ranks[i] for i in range(len(combined)) if combined[i][1] == 0)
+
+    u1 = r1 - nx * (nx + 1) / 2
+    mu = nx * ny / 2
+    sigma = math.sqrt(nx * ny * (nx + ny + 1) / 12)
+
+    if sigma == 0:
+        return None
+
+    z = (u1 - mu) / sigma
+    # Two-tailed p-value (normal approximation)
+    p = 2 * (1 - _norm_cdf(abs(z)))
+    return p
+
+
+def _norm_cdf(x):
+    """Standard normal CDF approximation (Abramowitz & Stegun)."""
+    a1 = 0.254829592
+    a2 = -0.284496736
+    a3 = 1.421413741
+    a4 = -1.453152027
+    a5 = 1.061405429
+    p = 0.3275911
+    sign = 1 if x >= 0 else -1
+    x = abs(x) / math.sqrt(2)
+    t = 1.0 / (1.0 + p * x)
+    y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * math.exp(-x * x)
+    return 0.5 * (1.0 + sign * y)
 
 
 # ──────────────────────────────────────────────────────────────

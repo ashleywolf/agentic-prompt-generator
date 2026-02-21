@@ -1,19 +1,28 @@
 ## 📊 Success Predictors: What Configuration Matters?
 
-**Sample size:** 639 workflows with run data + source
+**Full dataset:** 639 workflows with run data + source
+**Deduplicated:** 514 unique prompts (template clones removed)
 
 ### Binary Feature Impact on Success Rate
 
-| Feature | With (n) | Without (n) | Δ Success Rate | Effect |
-|---------|----------|-------------|----------------|--------|
-| Pre-fetch steps | 62% (94) | 65% (545) | -3% | ⚪ |
-| Numbered instructions | 64% (545) | 69% (94) | -5% | ⚪ |
-| Code block examples | 65% (346) | 64% (293) | +1% | ⚪ |
-| Output format spec | 63% (294) | 66% (345) | -2% | ⚪ |
-| Rate limit awareness | 74% (50) | 64% (589) | +11% | 🟢 |
-| Error handling mentions | 60% (363) | 71% (276) | -11% | 🔴 |
-| Negative constraints (DO NOT) | 66% (425) | 61% (214) | +5% | ⚪ |
-| Bash tool enabled | 64% (103) | 65% (536) | -1% | ⚪ |
+| Feature | With (n) | Without (n) | Δ | p-value | Confidence | Dedup Δ |
+|---------|----------|-------------|---|---------|------------|---------|
+| Pre-fetch steps | 62% (94) | 65% (545) | -3% | 0.503 | ⚪ Weak | -2% |
+| Numbered instructions | 64% (545) | 69% (94) | -5% | 0.410 | ⚪ Weak | -4% |
+| Code block examples | 65% (346) | 64% (293) | +1% | 0.981 | ⚪ Weak | +5% |
+| Output format spec | 63% (294) | 66% (345) | -2% | 0.238 | ⚪ Weak | +3% |
+| Rate limit awareness | 74% (50) | 64% (589) | +11% | 0.059 | ⚪ Weak | +1% |
+| Error handling | 62% (204) | 65% (435) | -3% | 0.251 | ⚪ Weak | +0% |
+| Negative constraints (DO NOT) | 67% (230) | 63% (409) | +4% | 0.334 | ⚪ Weak | +4% |
+| Bash tool enabled | 64% (103) | 65% (536) | -1% | 0.160 | ⚪ Weak | +1% |
+
+### Success Rate by Repo Maturity
+
+| Maturity | Avg Success | Count | Dedup Count |
+|----------|-------------|-------|-------------|
+| production | 64% | 184 | 164 |
+| hobby | 65% | 305 | 243 |
+| test | 64% | 150 | 107 |
 
 ### Numeric Feature Correlations with Success Rate
 
@@ -41,10 +50,9 @@
 | Engine | Avg Success | Count |
 |--------|-------------|-------|
 | default/unknown | 67% | 352 |
-| claude | 67% | 46 |
-| id: | 61% | 58 |
-| copilot | 60% | 165 |
-| codex | 51% | 14 |
+| claude | 64% | 59 |
+| copilot | 62% | 202 |
+| codex | 47% | 22 |
 
 ### Success Rate by Trigger Combination
 
@@ -68,8 +76,10 @@
 
 ### Key Takeaways
 
-- **Error handling mentions** decreases success rate by 11% (n=363 vs 276)
-- **Rate limit awareness** increases success rate by 11% (n=50 vs 589)
-- **Negative constraints (DO NOT)** increases success rate by 5% (n=425 vs 214)
-- **Numbered instructions** decreases success rate by 5% (n=545 vs 94)
-- **Pre-fetch steps** decreases success rate by 3% (n=94 vs 545)
+⚠️ No features reached statistical significance at p < 0.05 — findings are directional only.
+
+**Directional only (not significant):**
+
+- Rate limit awareness: +11% (n=50 vs 589)
+- Numbered instructions: -5% (n=545 vs 94)
+- Negative constraints (DO NOT): +4% (n=230 vs 409)

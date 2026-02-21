@@ -30,14 +30,14 @@
 | Dimension | Healthy (n=347) | Failing (n=292) | Δ |
 |-----------|---------------|----------------|---|
 | Avg prompt lines | 152.3 | 124.5 | +27.8 |
-| Avg word count | 816.7 | 708.8 | +107.8 |
+| Avg word count | 816.5 | 708.8 | +107.7 |
 | Avg sections | 16.8 | 14.2 | +2.6 |
 | Avg code blocks | 3.0 | 2.2 | +0.8 |
 | Has pre-steps | 15% | 15% | -0% |
 | Has numbered steps | 85% | 86% | -1% |
 | Has examples | 54% | 54% | +0% |
 | Has format spec | 45% | 47% | -2% |
-| Has error handling | 51% | 64% | -13% |
+| Has error handling | 30% | 34% | -4% |
 
 ### Controlled Pairs: Same Repo, Different Outcomes
 

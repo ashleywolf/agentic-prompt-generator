@@ -18,18 +18,18 @@
 | Repo | Stars | Workflows | Avg Success | Notable |
 |------|-------|-----------|-------------|---------|
 | [appwrite/appwrite](https://github.com/appwrite/appwrite) | 54898 | 1 | 100% | structured |
-| [phpstan/phpstan](https://github.com/phpstan/phpstan) | 13829 | 1 | 100% | structured, format-spec |
+| [phpstan/phpstan](https://github.com/phpstan/phpstan) | 13829 | 1 | 100% | format-spec, structured |
 | [opencollective/opencollective](https://github.com/opencollective/opencollective) | 2248 | 1 | 100% | structured |
 | [javaevolved/javaevolved.github.io](https://github.com/javaevolved/javaevolved.github.io) | 152 | 1 | 100% | structured |
 | [centminmod/explain-openclaw](https://github.com/centminmod/explain-openclaw) | 108 | 1 | 100% | structured |
 | [llm-d/llm-d-inference-sim](https://github.com/llm-d/llm-d-inference-sim) | 87 | 1 | 100% | structured |
-| [doggy8088/Apptopia](https://github.com/doggy8088/Apptopia) | 75 | 1 | 100% | structured, format-spec |
+| [doggy8088/Apptopia](https://github.com/doggy8088/Apptopia) | 75 | 1 | 100% | format-spec, structured |
 | [fideus-labs/ngff-zarr](https://github.com/fideus-labs/ngff-zarr) | 66 | 1 | 100% | structured |
 | [pikax/verter](https://github.com/pikax/verter) | 54 | 1 | 100% | structured |
 | [copilot-community-sdk/copilot-sdk-java](https://github.com/copilot-community-sdk/copilot-sdk-java) | 39 | 1 | 100% | — |
 | [chrisreddington/flight-school](https://github.com/chrisreddington/flight-school) | 24 | 1 | 100% | structured |
-| [talk2MeGooseman/stream_closed_captioner_phoenix](https://github.com/talk2MeGooseman/stream_closed_captioner_phoenix) | 24 | 1 | 100% | pre-steps, structured |
-| [kubestellar/docs](https://github.com/kubestellar/docs) | 23 | 1 | 100% | pre-steps, format-spec, structured |
+| [talk2MeGooseman/stream_closed_captioner_phoenix](https://github.com/talk2MeGooseman/stream_closed_captioner_phoenix) | 24 | 1 | 100% | structured, pre-steps |
+| [kubestellar/docs](https://github.com/kubestellar/docs) | 23 | 1 | 100% | format-spec, structured, pre-steps |
 | [github-dockyard-community/radio](https://github.com/github-dockyard-community/radio) | 5 | 1 | 100% | — |
 | [llm-d/llm-d-pd-utils](https://github.com/llm-d/llm-d-pd-utils) | 5 | 1 | 100% | structured |
 
@@ -51,12 +51,11 @@
 | Engine | Count | % of Community |
 |--------|-------|----------------|
 | unknown | 352 | 68% |
-| copilot | 95 | 18% |
-| id: | 42 | 8% |
-| claude | 23 | 4% |
-| codex | 3 | 1% |
-| model: | 2 | 0% |
+| copilot | 125 | 24% |
+| claude | 29 | 6% |
+| codex | 10 | 2% |
 | copilot-sdk | 1 | 0% |
+| "copilot" | 1 | 0% |
 
 ### Potential Novel Patterns
 
