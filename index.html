@@ -38,7 +38,7 @@
       </div>
       <div class="progress-step" data-step="4">
         <div class="step-indicator">4</div>
-        <div class="step-label">Data</div>
+        <div class="step-label">Tools</div>
       </div>
       <div class="progress-step" data-step="5">
         <div class="step-indicator">5</div>
@@ -235,33 +235,61 @@
       </div>
     </section>
 
-    <!-- Step 4: External data -->
+    <!-- Step 4: Data & capabilities -->
     <section class="wizard-step" id="step-4">
-      <h2 class="step-title">Does it need external data?</h2>
-      <p class="step-description">Does the workflow need to fetch data beyond the event context?</p>
+      <h2 class="step-title">What data and tools does it need?</h2>
+      <p class="step-description">Select any extra capabilities beyond the default GitHub context.</p>
       <div class="option-group" id="data-options">
         <label class="option-card">
-          <input type="radio" name="needs-data" value="no">
+          <input type="checkbox" name="capability" value="pre-steps">
           <div class="option-info">
-            <div class="option-label">No</div>
-            <div class="option-desc">The workflow has everything it needs from the event context</div>
+            <div class="option-label">Pre-fetch data with a script</div>
+            <div class="option-desc">Run shell commands before the agent starts — API calls, builds, data collection</div>
           </div>
         </label>
         <label class="option-card">
-          <input type="radio" name="needs-data" value="yes">
+          <input type="checkbox" name="capability" value="web-search">
           <div class="option-info">
-            <div class="option-label">Yes</div>
-            <div class="option-desc">It needs to fetch data first (API calls, file reads, etc.)</div>
+            <div class="option-label">Search the web</div>
+            <div class="option-desc">Add Tavily web search to look up docs, articles, or current information</div>
+          </div>
+        </label>
+        <label class="option-card">
+          <input type="checkbox" name="capability" value="mcp">
+          <div class="option-info">
+            <div class="option-label">Connect to external services (MCP)</div>
+            <div class="option-desc">Slack, Notion, databases, or any MCP-compatible service</div>
+          </div>
+        </label>
+        <label class="option-card">
+          <input type="checkbox" name="capability" value="github-toolsets">
+          <div class="option-info">
+            <div class="option-label">Additional GitHub data</div>
+            <div class="option-desc">Actions runs, code scanning alerts, discussions, projects, and more</div>
+          </div>
+        </label>
+        <label class="option-card">
+          <input type="checkbox" name="capability" value="memory">
+          <div class="option-info">
+            <div class="option-label">Persistent memory across runs</div>
+            <div class="option-desc">Remember context between workflow executions for trends and history</div>
+          </div>
+        </label>
+        <label class="option-card">
+          <input type="checkbox" name="capability" value="bash">
+          <div class="option-info">
+            <div class="option-label">Run shell commands</div>
+            <div class="option-desc">Execute build tools, linters, test runners, or custom scripts</div>
           </div>
         </label>
       </div>
       <div class="conditional-field" id="data-description-field">
-        <label for="data-description">Describe what data it needs:</label>
-        <textarea class="text-area" id="data-description" placeholder="e.g., Fetch the latest release from an upstream GitHub repo and compare with local version…"></textarea>
+        <label for="data-description">Describe what data or services you need:</label>
+        <textarea class="text-area" id="data-description" placeholder="e.g., Fetch latest releases from an upstream repo, query a Notion database for project status, search the web for CVE details…"></textarea>
       </div>
       <div class="step-nav">
         <button class="btn btn-secondary" id="prev-4">← Back</button>
-        <button class="btn btn-primary" id="next-4" disabled>Generate →</button>
+        <button class="btn btn-primary" id="next-4">Generate →</button>
       </div>
     </section>
 

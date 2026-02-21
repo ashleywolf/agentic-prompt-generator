@@ -130,12 +130,13 @@
       });
     });
 
-    // Step 4: data radios
-    document.querySelectorAll('input[name="needs-data"]').forEach(function (radio) {
-      radio.addEventListener('change', function () {
-        updateCardSelection('#data-options', 'radio');
-        document.getElementById('next-4').disabled = false;
-        document.getElementById('data-description-field').classList.toggle('visible', radio.value === 'yes');
+    // Step 4: capability checkboxes (no selection required — skip is fine)
+    document.querySelectorAll('input[name="capability"]').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        updateCardSelection('#data-options', 'checkbox');
+        // Show description field if any capability is checked
+        var anyChecked = hasChecked('capability');
+        document.getElementById('data-description-field').classList.toggle('visible', anyChecked);
       });
     });
   }
@@ -186,15 +187,22 @@
     updateCardSelection('#output-options', 'checkbox');
     document.getElementById('next-3').disabled = !hasChecked('output');
 
-    // Pre-select data need
-    var needsData = (id === 'dependency-monitor' || id === 'status-report' || id === 'upstream-monitor') ? 'yes' : 'no';
-    var dataRadio = document.querySelector('input[name="needs-data"][value="' + needsData + '"]');
-    if (dataRadio) {
-      dataRadio.checked = true;
-      updateCardSelection('#data-options', 'radio');
-      document.getElementById('next-4').disabled = false;
-      document.getElementById('data-description-field').classList.toggle('visible', needsData === 'yes');
+    // Pre-select capabilities based on archetype
+    document.querySelectorAll('input[name="capability"]').forEach(function (cb) { cb.checked = false; });
+    var preselect = [];
+    if (id === 'dependency-monitor' || id === 'upstream-monitor') {
+      preselect = ['pre-steps', 'bash'];
+    } else if (id === 'status-report') {
+      preselect = ['pre-steps', 'github-toolsets'];
+    } else if (id === 'code-improvement' || id === 'documentation-updater') {
+      preselect = ['bash'];
     }
+    preselect.forEach(function (cap) {
+      var cb = document.querySelector('input[name="capability"][value="' + cap + '"]');
+      if (cb) cb.checked = true;
+    });
+    updateCardSelection('#data-options', 'checkbox');
+    document.getElementById('data-description-field').classList.toggle('visible', preselect.length > 0);
   }
 
   // ── Gather answers ─────────────────────────────────────────────────────────
@@ -204,14 +212,16 @@
     document.querySelectorAll('input[name="trigger"]:checked').forEach(function (cb) { triggers.push(cb.value); });
     var outputs = [];
     document.querySelectorAll('input[name="output"]:checked').forEach(function (cb) { outputs.push(cb.value); });
-    var needsData = document.querySelector('input[name="needs-data"]:checked');
+    var capabilities = [];
+    document.querySelectorAll('input[name="capability"]:checked').forEach(function (cb) { capabilities.push(cb.value); });
 
     return {
       archetype: arch ? arch.value : 'custom',
       customDescription: document.getElementById('custom-description').value.trim(),
       triggers: triggers,
       outputs: outputs,
-      needsData: needsData ? needsData.value === 'yes' : false,
+      capabilities: capabilities,
+      needsData: capabilities.indexOf('pre-steps') !== -1,
       dataDescription: document.getElementById('data-description').value.trim()
     };
   }
@@ -293,15 +303,63 @@
     var triggerYaml = buildTriggerYaml(answers.triggers);
 
     // Frontmatter
+    var caps = answers.capabilities || [];
     var fm = '---\n';
     fm += 'name: ' + name + '\n';
     fm += 'description: ' + desc + '\n';
     fm += 'on:\n' + triggerYaml;
+
+    // Tools section — merge output tools + capability tools
     fm += 'tools:\n';
     tools.forEach(function (t) { fm += '  - ' + t + '\n'; });
+    if (caps.indexOf('web-search') !== -1) {
+      fm += '  web-fetch:\n';
+    }
+    if (caps.indexOf('bash') !== -1) {
+      fm += '  bash: true\n';
+    }
+    if (caps.indexOf('github-toolsets') !== -1) {
+      fm += '  github:\n';
+      fm += '    toolsets: [repos, issues, pull_requests, actions, code_security, discussions]\n';
+    }
+    if (caps.indexOf('memory') !== -1) {
+      fm += '  cache-memory:\n';
+    }
+
     fm += 'safe-outputs:\n';
     safeOutputs.forEach(function (s) { fm += '  - ' + s + '\n'; });
     fm += 'timeout-minutes: ' + timeout + '\n';
+
+    // MCP servers
+    if (caps.indexOf('web-search') !== -1) {
+      fm += 'mcp-servers:\n';
+      fm += '  tavily:\n';
+      fm += '    command: npx\n';
+      fm += '    args: ["-y", "@tavily/mcp-server"]\n';
+      fm += '    env:\n';
+      fm += '      TAVILY_API_KEY: "${{ secrets.TAVILY_API_KEY }}"\n';
+      fm += '    allowed: ["search", "search_news"]\n';
+    }
+    if (caps.indexOf('mcp') !== -1 && caps.indexOf('web-search') === -1) {
+      fm += 'mcp-servers:\n';
+    }
+    if (caps.indexOf('mcp') !== -1) {
+      fm += '  # Add your MCP server config here — see https://github.github.com/gh-aw/guides/mcps/\n';
+      fm += '  # example:\n';
+      fm += '  #   container: "mcp/your-service"\n';
+      fm += '  #   env:\n';
+      fm += '  #     API_KEY: "${{ secrets.YOUR_API_KEY }}"\n';
+      fm += '  #   allowed: ["tool1", "tool2"]\n';
+    }
+
+    // Network permissions for web search
+    if (caps.indexOf('web-search') !== -1) {
+      fm += 'network:\n';
+      fm += '  allowed:\n';
+      fm += '    - defaults\n';
+      fm += '    - "*.tavily.com"\n';
+    }
+
     fm += '---\n\n';
 
     // Body — varies by archetype
@@ -395,9 +453,30 @@
     prompt += '- Name: ' + name + '\n';
     prompt += '- Triggers: ' + triggersReadable + '\n';
     prompt += '- Allowed outputs: ' + outputsReadable + '\n';
-    if (answers.needsData && answers.dataDescription) {
-      prompt += '- External data needed: ' + answers.dataDescription + '\n';
-      prompt += '- Add a pre-step to fetch this data before the agent runs\n';
+
+    var caps = answers.capabilities || [];
+    if (caps.indexOf('pre-steps') !== -1) {
+      prompt += '- Add a pre-step to fetch data before the agent runs';
+      if (answers.dataDescription) prompt += ': ' + answers.dataDescription;
+      prompt += '\n';
+    }
+    if (caps.indexOf('web-search') !== -1) {
+      prompt += '- Add Tavily web search via MCP server (see https://github.github.com/gh-aw/guides/web-search/)\n';
+    }
+    if (caps.indexOf('mcp') !== -1) {
+      prompt += '- Connect to external services via MCP servers (see https://github.github.com/gh-aw/guides/mcps/)\n';
+    }
+    if (caps.indexOf('github-toolsets') !== -1) {
+      prompt += '- Enable additional GitHub toolsets: actions, code_security, discussions\n';
+    }
+    if (caps.indexOf('memory') !== -1) {
+      prompt += '- Add cache-memory tool for persistent memory across runs\n';
+    }
+    if (caps.indexOf('bash') !== -1) {
+      prompt += '- Enable bash tool for shell command execution\n';
+    }
+    if (answers.dataDescription && caps.indexOf('pre-steps') === -1) {
+      prompt += '- Additional context: ' + answers.dataDescription + '\n';
     }
 
     prompt += '\nThe workflow should be saved to .github/workflows/' + name + '.md';
