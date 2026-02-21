@@ -24,7 +24,7 @@ From analyzing 4,888 production workflow runs across 269 public repos:
 - **Issue triage is the most reliable archetype** — ~72% success rate, making it the safest starting point.
 - **Prompt sweet spot is 3–8 KB** — too short and the agent lacks context; too long and it loses focus.
 - **Avoid `pr-fix` and `ci-doctor` templates** — both have <20% success rates in practice.
-- **100% of community workflows use the default model** — no one overrides it, so neither should you.
+- **Model selection is flexible** — most workflows use the default engine, and changing the model hasn't shown significant differences in success rates across public repos.
 
 ## Self-updating
 
