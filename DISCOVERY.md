@@ -22,55 +22,23 @@ The `.lock.yml` file is the compiled output. Its corresponding `.md` file (same 
 
 ### 1. Discovery
 
-Search GitHub for `.lock.yml` files using code search:
-
-```
-path:.github/workflows extension:lock.yml
-```
-
-This returns repos containing compiled agentic workflow files. Each result is a candidate for analysis.
+Search GitHub for `.lock.yml` files using code search: `path:.github/workflows extension:lock.yml`. Each result is a candidate repo.
 
 ### 2. Visibility
 
-Verify each candidate repo is public via the GitHub API:
-
-```bash
-gh api "repos/{owner}/{repo}" --jq '.visibility'
-```
-
-Only repos returning `"public"` are included. Private and internal repos are excluded so all data is independently verifiable.
+Verify each repo is public via `gh api "repos/{owner}/{repo}" --jq '.visibility'`. Only repos returning `"public"` are included so all data is independently verifiable.
 
 ### 3. Source analysis
 
-For each public repo, fetch the `.md` source files from `.github/workflows/` and parse YAML frontmatter to extract:
-
-- **Triggers** — `issues`, `pull_request`, `schedule`, `push`, etc.
-- **Model** — explicit model override (if any; most use default)
-- **Pre-steps** — bash steps that run before the agent
-- **Stop-after** — time limits on agent execution
+Fetch `.md` source files from `.github/workflows/` and parse YAML frontmatter to extract triggers, model overrides, pre-steps, and stop-after limits.
 
 ### 4. Run history
 
-Query the GitHub Actions API for recent workflow runs:
-
-```bash
-gh api "repos/{owner}/{repo}/actions/runs?per_page=10" \
-  --jq '.workflow_runs[] | {id, conclusion, created_at}'
-```
-
-For each workflow, compute success rate (e.g., `"8/10"`) and record whether the repo has been active in the last 90 days.
+Query the Actions API (`repos/{owner}/{repo}/actions/runs`) for recent runs. Compute per-workflow success rates (e.g., `"8/10"`) and flag repos active in the last 90 days.
 
 ### 5. Log analysis
 
-For failed runs, parse job logs to categorize error patterns:
-
-- `auth_error` — permission or token issues
-- `not_found` — missing files or resources
-- `safe_output_denied` — agent output blocked by safety filters
-- `timeout` — agent exceeded time limits
-- `rate_limit` — API rate limiting
-
-These patterns inform which workflow archetypes are reliable and which to avoid.
+Parse job logs from failed runs to categorize errors: `auth_error`, `not_found`, `safe_output_denied`, `timeout`, `rate_limit`. These patterns determine which archetypes are reliable.
 
 ## How to run
 
