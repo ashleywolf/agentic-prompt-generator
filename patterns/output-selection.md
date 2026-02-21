@@ -63,15 +63,18 @@ Scheduled workflows that discover issues and file them for humans.
 Long-form output that benefits from threaded responses.
 
 **Real examples:**
-- [`github/gh-aw/lockfile-stats`](https://github.com/github/gh-aw/blob/main/.github/workflows/lockfile-stats.md) — Posts analysis to Discussions (3,356 ⭐). This workflow declares `safe_outputs: [create-pull-request, create-discussion, add-comment, create-issue]` — one of few with explicit output restrictions.
+- [`dotnet/aspire/daily-repo-status`](https://github.com/dotnet/aspire/blob/main/.github/workflows/daily-repo-status.md) — Posts analysis to Discussions alongside issues (5,457 ⭐)
+- [`lablup/backend.ai-webui/weekly-team-status`](https://github.com/lablup/backend.ai-webui/blob/main/.github/workflows/weekly-team-status.md) — Team status posted to Discussions with 6-month `stop_after` window (125 ⭐)
+- [`devantler-tech/ksail/plan`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/plan.md) — Planning output via Discussions for threaded follow-up (130 ⭐)
 
 ## Pattern 5: Safe Outputs (Restricting What the Agent Can Do)
 
 The `safe_outputs` field restricts which output types a workflow is allowed to use. Only 3 workflows in the scan declare explicit `safe_outputs`:
 
-- [`github/gh-aw/lockfile-stats`](https://github.com/github/gh-aw/blob/main/.github/workflows/lockfile-stats.md) — `[create-pull-request, create-discussion, add-comment, create-issue]` (3,356 ⭐)
-- [`JoshGreenslade/AITraining/workflow-architect`](https://github.com/JoshGreenslade/AITraining/blob/main/.github/workflows/workflow-architect.md) — `[add-comment, add-labels]`
-- [`nikhilmlal/test_repo/issue-triage.agent`](https://github.com/nikhilmlal/test_repo/blob/main/.github/workflows/issue-triage.agent.md) — `[add-comment]`
+- [`JoshGreenslade/AITraining/workflow-architect`](https://github.com/JoshGreenslade/AITraining/blob/main/.github/workflows/workflow-architect.md) — `[add-comment, add-labels]` — can only comment and label, not create PRs
+- [`nikhilmlal/test_repo/issue-triage.agent`](https://github.com/nikhilmlal/test_repo/blob/main/.github/workflows/issue-triage.agent.md) — `[add-comment]` — comment-only, the most restrictive setting
+
+See also: [`github/gh-aw/lockfile-stats`](https://github.com/github/gh-aw/blob/main/.github/workflows/lockfile-stats.md) uses `[create-pull-request, create-discussion, add-comment, create-issue]` — one of few with a broad but explicit output whitelist.
 
 **Most workflows rely on the platform's default output permissions.** Use `safe_outputs` when you need to lock down a workflow to only specific actions.
 

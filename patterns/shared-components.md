@@ -9,7 +9,7 @@ From **269 repos** with **679 workflows**, most workflows are self-contained. Re
 | Pattern | Examples | Description |
 |---------|----------|-------------|
 | Naming conventions | 57 repos use `daily-repo-status` | Same workflow name = same logic |
-| Multi-workflow repos | `github/gh-aw` has 120 workflows | Shared context via co-location |
+| Multi-workflow repos | `devantler-tech/ksail` has 14 workflows | Full suite via co-location |
 | Imports | 7 workflows declare `imports` | Explicit dependency on shared code |
 | Fork-and-customize | 16 repos have `ci-doctor` | Community copies of proven patterns |
 
@@ -18,8 +18,8 @@ From **269 repos** with **679 workflows**, most workflows are self-contained. Re
 | You want to… | Pattern | Example |
 |--------------|---------|---------|
 | Use a proven workflow pattern | **Fork a template** | Copy `daily-repo-status` from any of 57 repos |
-| Share config across workflows | **Shared directory** | `github/gh-aw` shared/ pattern |
-| Import shared logic | **Imports field** | `Olino3/forge` imports pattern |
+| Share config across workflows | **Shared directory** | `Olino3/forge` model-per-task pattern |
+| Import shared logic | **Imports field** | `zircote/rlm-rs` imports pattern |
 | Standardize across many repos | **Naming convention** | Same workflow name = same behavior |
 | Build a workflow suite | **Multi-workflow repo** | `devantler-tech/ksail` (14 workflows) |
 
@@ -51,36 +51,26 @@ CI failure diagnosis via `workflow_run`. Copied across repos:
 
 Weekly research reports. Consistent naming across repos:
 
-- [`github/gh-aw/weekly-issue-summary`](https://github.com/github/gh-aw/blob/main/.github/workflows/weekly-issue-summary.md) (3,356 ⭐)
 - [`devantler-tech/ksail/weekly-research`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/weekly-research.md) (130 ⭐)
 - [`lablup/backend.ai-webui/weekly-team-status`](https://github.com/lablup/backend.ai-webui/blob/main/.github/workflows/weekly-team-status.md) (125 ⭐)
+- [`github-dockyard-community/radio/weekly-research`](https://github.com/github-dockyard-community/radio/blob/main/.github/workflows/weekly-research.md) (5 ⭐)
 
 ## Pattern 2: Multi-Workflow Repos (Shared Context)
 
 Some repos run many workflows that share context by being co-located.
 
-### `github/gh-aw` — 120 workflows
-
-The largest agentic workflow repo in the scan. Workflows share:
-- The same repo context (codebase, issues, discussions)
-- Shared Go packages (e.g., `imports: ["github.com/github/gh-aw/pkg/logger"]`)
-- Common patterns (pre-steps, triggers, safety config)
-
-**Specialized workflows in the suite:**
-- [`github/gh-aw/firewall`](https://github.com/github/gh-aw/blob/main/.github/workflows/firewall.md) — Security firewall
-- [`github/gh-aw/release`](https://github.com/github/gh-aw/blob/main/.github/workflows/release.md) — Release automation
-- [`github/gh-aw/q`](https://github.com/github/gh-aw/blob/main/.github/workflows/q.md) — Q&A slash command
-- [`github/gh-aw/tidy`](https://github.com/github/gh-aw/blob/main/.github/workflows/tidy.md) — Code cleanup
-
 ### `devantler-tech/ksail` — 14 workflows
 
-A community repo with a full workflow suite:
+The most comprehensive community workflow suite in the scan. Workflows cover every archetype:
 
 - [`ksail/ci-doctor`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/ci-doctor.md) — CI diagnosis
 - [`ksail/daily-perf-improver`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/daily-perf-improver.md) — Performance
 - [`ksail/daily-code-simplifier`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/daily-code-simplifier.md) — Simplification
 - [`ksail/unbloat-docs`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/unbloat-docs.md) — Doc cleanup
 - [`ksail/weekly-research`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/weekly-research.md) — Research reports
+- [`ksail/pr-fix`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/pr-fix.md) — Slash-command PR fixes
+- [`ksail/plan`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/plan.md) — Planning assistant
+- [`ksail/daily-workflow-updater`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/daily-workflow-updater.md) — Workflow config updates
 
 ### `Olino3/forge` — 11 workflows
 
@@ -93,14 +83,22 @@ A purpose-built workflow suite with explicit model selection per task:
 
 This demonstrates the **model-per-task** pattern: different models for different workflow types.
 
+### Other Notable Multi-Workflow Repos
+
+- [`DoriniTT/quantum-lego`](https://github.com/DoriniTT/quantum-lego) — 8 workflows with pre-steps for quantum circuit validation
+- [`HemSoft/hs-buddy`](https://github.com/HemSoft/hs-buddy) — 8 workflows including multi-model PR analysis comparison
+- [`JoshGreenslade/AITraining`](https://github.com/JoshGreenslade/AITraining) — 10 workflows for an AI training platform
+- [`lablup/backend.ai-webui`](https://github.com/lablup/backend.ai-webui) — 5 workflows covering test improvement, team status, and research (125 ⭐)
+
 ## Pattern 3: Imports (Explicit Shared Code)
 
-The `imports` field allows workflows to reference shared code. Still rare:
+The `imports` field allows workflows to reference shared code. Still rare but emerging:
 
-- [`github/gh-aw/go-logger`](https://github.com/github/gh-aw/blob/main/.github/workflows/go-logger.md) — imports `"github.com/github/gh-aw/pkg/logger"` (3,356 ⭐)
-- [`github/gh-aw-mcpg/go-logger`](https://github.com/github/gh-aw-mcpg/blob/main/.github/workflows/go-logger.md) — imports `"github.com/github/gh-aw-mcpg/internal/logger"` (45 ⭐)
+- [`zircote/rlm-rs/q`](https://github.com/zircote/rlm-rs/blob/main/.github/workflows/q.md) — Imports shared config for Q&A slash command (9 ⭐)
+- [`zircote/adrscope/q`](https://github.com/zircote/adrscope/blob/main/.github/workflows/q.md) — Same import pattern across repos (1 ⭐)
+- [`zircote/nsip/q`](https://github.com/zircote/nsip/blob/main/.github/workflows/q.md) — Shared Q&A workflow via imports (1 ⭐)
 
-**Current state:** Imports are used for Go package references within the same org. This pattern may expand as the ecosystem matures.
+**Current state:** Imports are used for shared config references across repos in the same org. See also: [`github/gh-aw`](https://github.com/github/gh-aw) uses imports for shared Go packages like `pkg/logger`. This pattern may expand as the ecosystem matures.
 
 ## Pattern 4: Naming Conventions as Reuse
 

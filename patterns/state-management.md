@@ -31,8 +31,8 @@ From **679 workflows** across **269 repos**, the vast majority are **stateless**
 Each run is independent. The agent reads the current event, responds, and forgets.
 
 **Real examples:**
-- [`appwrite/appwrite/issue-triage`](https://github.com/appwrite/appwrite/blob/main/.github/workflows/issue-triage.md) — Each issue triaged independently (54,898 ⭐)
 - [`f/prompts.chat/spam-check`](https://github.com/f/prompts.chat/blob/main/.github/workflows/spam-check.md) — Each PR checked independently (145,906 ⭐)
+- [`appwrite/appwrite/issue-triage`](https://github.com/appwrite/appwrite/blob/main/.github/workflows/issue-triage.md) — Each issue triaged independently (54,898 ⭐)
 - [`apolloconfig/apollo/issue-triage`](https://github.com/apolloconfig/apollo/blob/main/.github/workflows/issue-triage.md) — No cross-issue memory (29,779 ⭐)
 
 **When to use:** The event contains everything the agent needs. This is the default — don't add state unless you need it.
@@ -53,9 +53,9 @@ Use a GitHub Issue as a persistent tracking mechanism. The issue body or comment
 GitHub Discussions provide threaded, persistent storage for reports and analysis.
 
 **Real examples:**
-- [`github/gh-aw/lockfile-stats`](https://github.com/github/gh-aw/blob/main/.github/workflows/lockfile-stats.md) — Posts stats to Discussions, threads accumulate over time (3,356 ⭐)
-- [`github/gh-aw/org-health-report`](https://github.com/github/gh-aw/blob/main/.github/workflows/org-health-report.md) — Org health tracked in Discussions (3,356 ⭐)
-- [`github/gh-aw/daily-regulatory`](https://github.com/github/gh-aw/blob/main/.github/workflows/daily-regulatory.md) — Regulatory findings as discussion posts (3,356 ⭐)
+- [`dotnet/aspire/daily-repo-status`](https://github.com/dotnet/aspire/blob/main/.github/workflows/daily-repo-status.md) — Posts status to Discussions alongside issues, threads accumulate over time (5,457 ⭐)
+- [`lablup/backend.ai-webui/weekly-team-status`](https://github.com/lablup/backend.ai-webui/blob/main/.github/workflows/weekly-team-status.md) — Team status tracked in Discussions with 6-month window (125 ⭐)
+- [`devantler-tech/ksail/plan`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/plan.md) — Planning discussions threaded for follow-up (130 ⭐)
 
 **When to use:** Long-form reports, community-facing summaries, or anything benefiting from threaded follow-up.
 
@@ -65,8 +65,8 @@ Store state in the repository itself — config files, learned rules, or accumul
 
 **Real examples:**
 - [`phpstan/phpstan/generate-error-docs`](https://github.com/phpstan/phpstan/blob/main/.github/workflows/generate-error-docs.md) — Generated docs committed to repo (13,829 ⭐)
-- [`phpstan/phpstan-src/document-config-params`](https://github.com/phpstan/phpstan-src/blob/main/.github/workflows/document-config-params.md) — Config documentation committed on push (385 ⭐)
 - [`npgsql/efcore.pg/sync-to-latest-ef`](https://github.com/npgsql/efcore.pg/blob/main/.github/workflows/sync-to-latest-ef.md) — Sync changes committed via PR (1,801 ⭐)
+- [`phpstan/phpstan-src/document-config-params`](https://github.com/phpstan/phpstan-src/blob/main/.github/workflows/document-config-params.md) — Config documentation committed on push (385 ⭐)
 
 **How it works:** The agent makes changes and commits them (via PR). The repo itself becomes the memory.
 

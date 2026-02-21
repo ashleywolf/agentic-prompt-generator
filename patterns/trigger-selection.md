@@ -44,10 +44,10 @@ The most common trigger. Nearly always paired with `workflow_dispatch` for testi
 Cron triggers for recurring work. Almost always paired with `workflow_dispatch`.
 
 **Real examples:**
+- [`BabylonJS/Babylon.js/code-simplifier`](https://github.com/BabylonJS/Babylon.js/blob/main/.github/workflows/code-simplifier.md) — Scheduled code improvement (25,113 ⭐)
 - [`dotnet/maui/daily-repo-status`](https://github.com/dotnet/maui/blob/main/.github/workflows/daily-repo-status.md) — Daily health report (23,180 ⭐)
 - [`dotnet/aspire/daily-repo-status`](https://github.com/dotnet/aspire/blob/main/.github/workflows/daily-repo-status.md) — Daily status with discussion trigger too (5,457 ⭐)
 - [`erigontech/erigon/daily-repo-status`](https://github.com/erigontech/erigon/blob/main/.github/workflows/daily-repo-status.md) — Daily repo health (3,531 ⭐)
-- [`BabylonJS/Babylon.js/code-simplifier`](https://github.com/BabylonJS/Babylon.js/blob/main/.github/workflows/code-simplifier.md) — Scheduled code improvement (25,113 ⭐)
 
 The `daily-repo-status` pattern appears in **57 repos** — the single most common workflow name in the scan.
 
@@ -57,10 +57,10 @@ Triggered on PR open/update. Used for review, validation, and checks.
 
 **Real examples:**
 - [`f/prompts.chat/spam-check`](https://github.com/f/prompts.chat/blob/main/.github/workflows/spam-check.md) — Checks PRs for spam content (145,906 ⭐)
-- [`github/copilot-sdk/sdk-consistency-review`](https://github.com/github/copilot-sdk/blob/main/.github/workflows/sdk-consistency-review.md) — SDK consistency on PRs (7,254 ⭐)
 - [`ZSWatch/ZSWatch/docs-pr-analyze`](https://github.com/ZSWatch/ZSWatch/blob/main/.github/workflows/docs-pr-analyze.md) — Analyzes docs PRs (3,128 ⭐)
 - [`llm-d/llm-d/link-checker`](https://github.com/llm-d/llm-d/blob/main/.github/workflows/link-checker.md) — Checks links in PRs (2,516 ⭐)
 - [`llm-d/llm-d/typo-checker`](https://github.com/llm-d/llm-d/blob/main/.github/workflows/typo-checker.md) — Checks typos in PRs (2,516 ⭐)
+- [`wp-media/wp-rocket/pr-release-doc-generator`](https://github.com/wp-media/wp-rocket/blob/main/.github/workflows/pr-release-doc-generator.md) — Release doc generation on PRs (738 ⭐)
 
 ## Pattern 4: Workflow Run (21 workflows)
 
@@ -87,10 +87,12 @@ Responds to GitHub Discussions — Q&A, support, community engagement.
 On-demand invocation via comment commands. Used for interactive tools.
 
 **Real examples:**
-- [`github/gh-aw/q`](https://github.com/github/gh-aw/blob/main/.github/workflows/q.md) — Answer questions on-demand (3,356 ⭐)
-- [`github/gh-aw/scout`](https://github.com/github/gh-aw/blob/main/.github/workflows/scout.md) — On-demand code search (3,356 ⭐)
-- [`github/gh-aw/grumpy-reviewer`](https://github.com/github/gh-aw/blob/main/.github/workflows/grumpy-reviewer.md) — Request a review on-demand (3,356 ⭐)
 - [`devantler-tech/ksail/pr-fix`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/pr-fix.md) — Fix PR issues on-demand (130 ⭐)
+- [`devantler-tech/ksail/unbloat-docs`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/unbloat-docs.md) — On-demand doc cleanup via slash command (130 ⭐)
+- [`devantler-tech/ksail/plan`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/plan.md) — Planning assistant via slash command (130 ⭐)
+- [`zircote/rlm-rs/q`](https://github.com/zircote/rlm-rs/blob/main/.github/workflows/q.md) — Answer questions on-demand (9 ⭐)
+
+See also: [`github/gh-aw`](https://github.com/github/gh-aw) pioneered the slash-command pattern with commands like `q`, `scout`, and `grumpy-reviewer`.
 
 ## Pattern 7: Push-Triggered (57 workflows)
 
@@ -98,8 +100,8 @@ Runs after pushes to specific branches. Used for post-merge automation.
 
 **Real examples:**
 - [`phpstan/phpstan-src/document-config-params`](https://github.com/phpstan/phpstan-src/blob/main/.github/workflows/document-config-params.md) — Updates docs after code push (385 ⭐)
-- [`github/gh-aw/release`](https://github.com/github/gh-aw/blob/main/.github/workflows/release.md) — Release automation on push (3,356 ⭐)
 - [`pikax/verter/update-docs`](https://github.com/pikax/verter/blob/main/.github/workflows/update-docs.md) — Auto-update docs on push (54 ⭐)
+- [`rysweet/amplihack/bot-detection`](https://github.com/rysweet/amplihack/blob/main/.github/workflows/bot-detection.md) — Push-triggered activity analysis (21 ⭐)
 
 ## Common Trigger Combinations
 

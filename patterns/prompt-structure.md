@@ -31,7 +31,7 @@ Define the agent's role, then list numbered steps. The dominant pattern.
 **Real examples:**
 - [`appwrite/appwrite/issue-triage`](https://github.com/appwrite/appwrite/blob/main/.github/workflows/issue-triage.md) — "You are a triage agent. 1. Read the issue. 2. Classify. 3. Label." (54,898 ⭐)
 - [`apolloconfig/apollo/issue-triage`](https://github.com/apolloconfig/apollo/blob/main/.github/workflows/issue-triage.md) — Role-based triage instructions (29,779 ⭐)
-- [`github/copilot-sdk/issue-triage`](https://github.com/github/copilot-sdk/blob/main/.github/workflows/issue-triage.md) — Structured role + steps (7,254 ⭐)
+- [`evcc-io/evcc/triage-agent`](https://github.com/evcc-io/evcc/blob/main/.github/workflows/triage-agent.md) — Structured role + steps for triage (6,169 ⭐)
 
 **Structure:**
 ```markdown
@@ -111,10 +111,11 @@ Generate a status report using this template:
 Defines a character with a specific tone. Used for community-facing interactions.
 
 **Real examples:**
-- [`github/gh-aw/poem-bot`](https://github.com/github/gh-aw/blob/main/.github/workflows/poem-bot.md) — Responds with poetry, uses `gpt-5` model (3,356 ⭐)
-- [`github/gh-aw/grumpy-reviewer`](https://github.com/github/gh-aw/blob/main/.github/workflows/grumpy-reviewer.md) — Deliberately grumpy code reviews via slash command (3,356 ⭐)
-- [`github/gh-aw/delight`](https://github.com/github/gh-aw/blob/main/.github/workflows/delight.md) — Delightful community engagement (3,356 ⭐)
-- [`ohcnetwork/care_fe/thank-you-note`](https://github.com/ohcnetwork/care_fe/blob/main/.github/workflows/thank-you-note.md) — Thank contributors with personality (606 ⭐)
+- [`ohcnetwork/care_fe/thank-you-note`](https://github.com/ohcnetwork/care_fe/blob/main/.github/workflows/thank-you-note.md) — Thank contributors with personality and warmth (606 ⭐)
+- [`codegefluester/GamesDat/analyze-game`](https://github.com/codegefluester/GamesDat/blob/main/.github/workflows/analyze-game.md) — Analyzes games with a distinctive review voice (1 ⭐)
+- [`JoshGreenslade/AITraining/prompt-engineering-coach`](https://github.com/JoshGreenslade/AITraining/blob/main/.github/workflows/prompt-engineering-coach.md) — Coaching personality for training discussions
+
+See also: [`github/gh-aw`](https://github.com/github/gh-aw) experiments with personality-driven bots like `poem-bot` (poetry responses) and `grumpy-reviewer` (deliberately grumpy code reviews).
 
 ## Style 5: Minimal (Simple Tasks)
 
@@ -130,8 +131,8 @@ A short, direct instruction. No role, no phases, just the task.
 ### The "Rules" Section
 
 Many high-star workflows include explicit rules/constraints:
-- [`evcc-io/evcc/triage-agent`](https://github.com/evcc-io/evcc/blob/main/.github/workflows/triage-agent.md) — Rules about when NOT to label (6,169 ⭐)
 - [`f/prompts.chat/spam-check`](https://github.com/f/prompts.chat/blob/main/.github/workflows/spam-check.md) — Spam detection criteria (145,906 ⭐)
+- [`evcc-io/evcc/triage-agent`](https://github.com/evcc-io/evcc/blob/main/.github/workflows/triage-agent.md) — Rules about when NOT to label (6,169 ⭐)
 
 ### The "Context" Section
 

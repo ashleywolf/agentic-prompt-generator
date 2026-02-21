@@ -39,27 +39,28 @@ The agent reads files, issues, and PRs itself using built-in tools. No pre-proce
 A `pre-steps` block runs shell commands before the agent starts. Output is piped as context.
 
 **Real examples:**
-- [`github/gh-aw/daily-copilot-token-report`](https://github.com/github/gh-aw/blob/main/.github/workflows/daily-copilot-token-report.md) — Fetches token usage data via API before analysis (3,356 ⭐)
-- [`github/gh-aw/bot-detection`](https://github.com/github/gh-aw/blob/main/.github/workflows/bot-detection.md) — Gathers activity signals in pre-step (3,356 ⭐)
-- [`github/gh-aw/stale-repo-identifier`](https://github.com/github/gh-aw/blob/main/.github/workflows/stale-repo-identifier.md) — Collects repo metadata before agent evaluates (3,356 ⭐)
+- [`fsprojects/FSharp.Data/auto-maintainer-assistant`](https://github.com/fsprojects/FSharp.Data/blob/main/.github/workflows/auto-maintainer-assistant.md) — Gathers NuGet package metadata via shell before agent evaluates dependencies (864 ⭐)
+- [`ohcnetwork/care_fe/daily-playwright-improver`](https://github.com/ohcnetwork/care_fe/blob/main/.github/workflows/daily-playwright-improver.md) — Runs Playwright test suite, feeds failure output to agent (606 ⭐)
+- [`Hack23/riksdagsmonitor/news-evening-analysis`](https://github.com/Hack23/riksdagsmonitor/blob/main/.github/workflows/news-evening-analysis.md) — Fetches Swedish parliamentary news data via API before analysis (2 ⭐)
 
 ## Pattern 3: Pre-Step Python (data transformation)
 
 Uses Python to reshape or aggregate data before the agent sees it.
 
 **Real examples:**
-- [`github/gh-aw/prompt-clustering-analysis`](https://github.com/github/gh-aw/blob/main/.github/workflows/prompt-clustering-analysis.md) — Python clusters prompts before agent analyzes patterns (3,356 ⭐)
-- [`github/gh-aw/static-analysis-report`](https://github.com/github/gh-aw/blob/main/.github/workflows/static-analysis-report.md) — Runs static analysis tools, feeds results to agent (3,356 ⭐)
+- [`elastic/opentelemetry-collector-components/pr-review`](https://github.com/elastic/opentelemetry-collector-components/blob/main/.github/workflows/pr-review.md) — Pre-processes PR changes before deep review with `claude-opus-4.6` (16 ⭐)
 - [`kubestellar/docs/maintainer-metrics`](https://github.com/kubestellar/docs/blob/main/.github/workflows/maintainer-metrics.md) — Computes contributor metrics in pre-step (23 ⭐)
+- [`DoriniTT/quantum-lego/examples-review`](https://github.com/DoriniTT/quantum-lego/blob/main/.github/workflows/examples-review.md) — Validates quantum circuit examples before agent reviews patterns
 
-## Pattern 4: Pre-Steps in Community Repos
+## Pattern 4: Pre-Steps Across the Ecosystem
 
-Pre-steps aren't just for large orgs. Community repos use them too:
+Pre-steps appear across repos of every size and domain:
 
-- [`fsprojects/FSharp.Data/auto-maintainer-assistant`](https://github.com/fsprojects/FSharp.Data/blob/main/.github/workflows/auto-maintainer-assistant.md) — Pre-step gathers NuGet package state (864 ⭐)
-- [`ohcnetwork/care_fe/daily-playwright-improver`](https://github.com/ohcnetwork/care_fe/blob/main/.github/workflows/daily-playwright-improver.md) — Runs Playwright tests, feeds failures to agent (606 ⭐)
 - [`kaito-project/aikit/daily-test-improver`](https://github.com/kaito-project/aikit/blob/main/.github/workflows/daily-test-improver.md) — Runs test suite in pre-step, agent improves failures (509 ⭐)
+- [`devantler-tech/ksail/daily-workflow-updater`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/daily-workflow-updater.md) — Pre-step gathers workflow metadata before agent updates configs (130 ⭐)
 - [`learntocloud/learn-to-cloud-app/content-link-auditor`](https://github.com/learntocloud/learn-to-cloud-app/blob/main/.github/workflows/content-link-auditor.md) — Checks links in pre-step, agent fixes broken ones (93 ⭐)
+- [`lablup/backend.ai-webui/daily-test-improver`](https://github.com/lablup/backend.ai-webui/blob/main/.github/workflows/daily-test-improver.md) — Pre-step runs tests, agent improves coverage (125 ⭐)
+- [`fsprojects/FSharp.Control.AsyncSeq/auto-maintainer-assistant`](https://github.com/fsprojects/FSharp.Control.AsyncSeq/blob/main/.github/workflows/auto-maintainer-assistant.md) — Pre-step gathers package state (171 ⭐)
 
 ## Rules
 

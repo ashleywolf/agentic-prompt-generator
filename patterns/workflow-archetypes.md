@@ -30,12 +30,12 @@ From **679 workflows** across **269 repos**, clear archetypes emerge from naming
 **Top real examples:**
 - [`appwrite/appwrite/issue-triage`](https://github.com/appwrite/appwrite/blob/main/.github/workflows/issue-triage.md) (54,898 ⭐)
 - [`apolloconfig/apollo/issue-triage`](https://github.com/apolloconfig/apollo/blob/main/.github/workflows/issue-triage.md) (29,779 ⭐)
-- [`github/copilot-sdk/issue-triage`](https://github.com/github/copilot-sdk/blob/main/.github/workflows/issue-triage.md) (7,254 ⭐)
 - [`frankbria/ralph-claude-code/triage-incoming-issues`](https://github.com/frankbria/ralph-claude-code/blob/main/.github/workflows/triage-incoming-issues.md) (7,097 ⭐)
 - [`evcc-io/evcc/triage-agent`](https://github.com/evcc-io/evcc/blob/main/.github/workflows/triage-agent.md) (6,169 ⭐)
 - [`dotnet/aspire/daily-repo-status`](https://github.com/dotnet/aspire/blob/main/.github/workflows/daily-repo-status.md) (5,457 ⭐)
 - [`apache/cloudstack/issue-triage-agent`](https://github.com/apache/cloudstack/blob/main/.github/workflows/issue-triage-agent.md) (2,800 ⭐)
 - [`opencollective/opencollective/issue-triage-agent`](https://github.com/opencollective/opencollective/blob/main/.github/workflows/issue-triage-agent.md) (2,248 ⭐)
+- [`kaito-project/aikit/issue-triage`](https://github.com/kaito-project/aikit/blob/main/.github/workflows/issue-triage.md) (509 ⭐)
 - [`apollographql/rover/issue-triage`](https://github.com/apollographql/rover/blob/main/.github/workflows/issue-triage.md) (444 ⭐)
 
 **Pattern notes:**
@@ -111,10 +111,10 @@ From **679 workflows** across **269 repos**, clear archetypes emerge from naming
 **Model:** Default
 
 **Real examples:**
-- [`github/gh-aw/weekly-issue-summary`](https://github.com/github/gh-aw/blob/main/.github/workflows/weekly-issue-summary.md) (3,356 ⭐)
 - [`devantler-tech/ksail/weekly-research`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/weekly-research.md) (130 ⭐)
 - [`lablup/backend.ai-webui/weekly-team-status`](https://github.com/lablup/backend.ai-webui/blob/main/.github/workflows/weekly-team-status.md) (125 ⭐)
 - [`devantler-tech/ksail/weekly-promote-ksail`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/weekly-promote-ksail.md) (130 ⭐)
+- [`github-dockyard-community/radio/weekly-research`](https://github.com/github-dockyard-community/radio/blob/main/.github/workflows/weekly-research.md) (5 ⭐)
 
 **Sub-variants:**
 - `weekly-research` (17 repos) — Researches topics and creates digests
@@ -132,12 +132,13 @@ From **679 workflows** across **269 repos**, clear archetypes emerge from naming
 **Model:** Varies
 
 **Real examples:**
-- [`github/gh-aw/q`](https://github.com/github/gh-aw/blob/main/.github/workflows/q.md) — Answer questions (3,356 ⭐)
-- [`github/gh-aw/scout`](https://github.com/github/gh-aw/blob/main/.github/workflows/scout.md) — Code search (3,356 ⭐)
-- [`github/gh-aw/grumpy-reviewer`](https://github.com/github/gh-aw/blob/main/.github/workflows/grumpy-reviewer.md) — On-demand code review (3,356 ⭐)
-- [`github/gh-aw/archie`](https://github.com/github/gh-aw/blob/main/.github/workflows/archie.md) — Architecture analysis (3,356 ⭐)
-- [`github/gh-aw/plan`](https://github.com/github/gh-aw/blob/main/.github/workflows/plan.md) — Planning assistant (3,356 ⭐)
 - [`devantler-tech/ksail/pr-fix`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/pr-fix.md) — Fix PR issues on request (130 ⭐)
+- [`devantler-tech/ksail/plan`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/plan.md) — Planning assistant (130 ⭐)
+- [`devantler-tech/ksail/unbloat-docs`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/unbloat-docs.md) — On-demand doc cleanup (130 ⭐)
+- [`zircote/rlm-rs/q`](https://github.com/zircote/rlm-rs/blob/main/.github/workflows/q.md) — Answer questions on-demand (9 ⭐)
+- [`codegefluester/GamesDat/analyze-game`](https://github.com/codegefluester/GamesDat/blob/main/.github/workflows/analyze-game.md) — On-demand game analysis (1 ⭐)
+
+See also: [`github/gh-aw`](https://github.com/github/gh-aw) pioneered slash commands at scale with `q` (Q&A), `scout` (code search), and `grumpy-reviewer` (on-demand review).
 
 ---
 
@@ -151,12 +152,12 @@ From **679 workflows** across **269 repos**, clear archetypes emerge from naming
 
 **Real examples:**
 - [`f/prompts.chat/spam-check`](https://github.com/f/prompts.chat/blob/main/.github/workflows/spam-check.md) — Spam detection on PRs (145,906 ⭐)
-- [`github/copilot-sdk/sdk-consistency-review`](https://github.com/github/copilot-sdk/blob/main/.github/workflows/sdk-consistency-review.md) — SDK consistency (7,254 ⭐)
 - [`ZSWatch/ZSWatch/docs-pr-analyze`](https://github.com/ZSWatch/ZSWatch/blob/main/.github/workflows/docs-pr-analyze.md) — Docs PR analysis (3,128 ⭐)
 - [`llm-d/llm-d/link-checker`](https://github.com/llm-d/llm-d/blob/main/.github/workflows/link-checker.md) — Link validation (2,516 ⭐)
 - [`llm-d/llm-d/typo-checker`](https://github.com/llm-d/llm-d/blob/main/.github/workflows/typo-checker.md) — Typo detection (2,516 ⭐)
-- [`elastic/opentelemetry-collector-components/pr-review`](https://github.com/elastic/opentelemetry-collector-components/blob/main/.github/workflows/pr-review.md) — Deep review with `claude-opus-4.6` (16 ⭐)
 - [`wp-media/wp-rocket/pr-release-doc-generator`](https://github.com/wp-media/wp-rocket/blob/main/.github/workflows/pr-release-doc-generator.md) — Release doc generation on PR (738 ⭐)
+- [`elastic/opentelemetry-collector-components/pr-review`](https://github.com/elastic/opentelemetry-collector-components/blob/main/.github/workflows/pr-review.md) — Deep review with `claude-opus-4.6` (16 ⭐)
+- [`HemSoft/hs-buddy/pr-analyzer-a`](https://github.com/HemSoft/hs-buddy/blob/main/.github/workflows/pr-analyzer-a.md) — Multi-model PR analysis with `claude-sonnet-4-5`
 
 ---
 
@@ -170,11 +171,11 @@ From **679 workflows** across **269 repos**, clear archetypes emerge from naming
 
 **Real examples:**
 - [`f/prompts.chat/spam-check`](https://github.com/f/prompts.chat/blob/main/.github/workflows/spam-check.md) — Checks for spam in PRs/issues (145,906 ⭐)
-- [`github/gh-aw/ai-moderator`](https://github.com/github/gh-aw/blob/main/.github/workflows/ai-moderator.md) — AI-powered content moderation (3,356 ⭐)
 
 **Pattern notes:**
 - Rare but impactful — `f/prompts.chat` is the highest-starred repo in the entire scan
 - Critical for high-traffic public repos
+- Community-driven moderation reduces maintainer burden
 
 ---
 
@@ -202,8 +203,8 @@ From **679 workflows** across **269 repos**, clear archetypes emerge from naming
 | Run daily code improvements | **Daily Improver** | `BabylonJS/Babylon.js/code-simplifier` |
 | Diagnose CI failures | **CI Doctor** | `JanDeDobbeleer/oh-my-posh/workflow-doctor` |
 | Generate weekly summaries | **Weekly Report** | `devantler-tech/ksail/weekly-research` |
-| Add on-demand commands | **Slash Command** | `github/gh-aw/q` |
-| Review PRs automatically | **PR Reviewer** | `github/copilot-sdk/sdk-consistency-review` |
+| Add on-demand commands | **Slash Command** | `devantler-tech/ksail/pr-fix` |
+| Review PRs automatically | **PR Reviewer** | `f/prompts.chat/spam-check` |
 | Moderate content | **Moderation** | `f/prompts.chat/spam-check` |
 | Watch upstream deps | **Upstream Monitor** | `npgsql/efcore.pg/sync-to-latest-ef` |
 

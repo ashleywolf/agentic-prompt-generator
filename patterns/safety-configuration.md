@@ -43,8 +43,9 @@ Used for workflows that should complete quickly. If they're still running after 
 
 **Real examples:**
 - [`kaito-project/aikit/daily-test-improver`](https://github.com/kaito-project/aikit/blob/main/.github/workflows/daily-test-improver.md) — Test improvements should finish quickly (509 ⭐)
-- [`AdaCore/z3/daily-perf-improver`](https://github.com/AdaCore/z3/blob/main/.github/workflows/daily-perf-improver.md) — Performance work with tight deadline (1 ⭐)
-- [`AdaCore/z3/ask`](https://github.com/AdaCore/z3/blob/main/.github/workflows/ask.md) — Q&A should respond promptly (1 ⭐)
+- [`fslaborg/FsMath/daily-perf-improver`](https://github.com/fslaborg/FsMath/blob/main/.github/workflows/daily-perf-improver.md) — Performance work with tight deadline (17 ⭐)
+- [`iamnbutler/sol-ui/daily-perf-improver`](https://github.com/iamnbutler/sol-ui/blob/main/.github/workflows/daily-perf-improver.md) — Daily perf tasks, 48h cap (11 ⭐)
+- [`danielmeppiel/agentic-hike-planner/daily-test-improver`](https://github.com/danielmeppiel/agentic-hike-planner/blob/main/.github/workflows/daily-test-improver.md) — Test improvements with tight timeout (6 ⭐)
 
 ### `+30d` / `+1mo` — Long-Running Tasks (42 workflows)
 
@@ -53,21 +54,27 @@ Used for workflows that may need extended time — waiting for human review, mul
 **Real examples:**
 - [`appwrite/appwrite/issue-triage`](https://github.com/appwrite/appwrite/blob/main/.github/workflows/issue-triage.md) — 30-day timeout for triage (54,898 ⭐)
 - [`JanDeDobbeleer/oh-my-posh/workflow-doctor`](https://github.com/JanDeDobbeleer/oh-my-posh/blob/main/.github/workflows/workflow-doctor.md) — 1-month timeout for CI diagnosis (21,566 ⭐)
-- [`kaito-project/aikit/issue-triage`](https://github.com/kaito-project/aikit/blob/main/.github/workflows/issue-triage.md) — 30-day triage window (509 ⭐)
 - [`opencollective/opencollective/issue-triage-agent`](https://github.com/opencollective/opencollective/blob/main/.github/workflows/issue-triage-agent.md) — Monthly triage window (2,248 ⭐)
+- [`kaito-project/aikit/issue-triage`](https://github.com/kaito-project/aikit/blob/main/.github/workflows/issue-triage.md) — 30-day triage window (509 ⭐)
+- [`chrisreddington/flight-school/issue-triage`](https://github.com/chrisreddington/flight-school/blob/main/.github/workflows/issue-triage.md) — 1-month triage window (24 ⭐)
+- [`talk2MeGooseman/stream_closed_captioner_phoenix/daily-test-improver`](https://github.com/talk2MeGooseman/stream_closed_captioner_phoenix/blob/main/.github/workflows/daily-test-improver.md) — Monthly timeout for test improvements (24 ⭐)
 
 ### `+6mo` — Extended Projects (2 workflows)
 
 Rare. Used for long-term tracking workflows.
+
+- [`lablup/backend.ai-webui/weekly-team-status`](https://github.com/lablup/backend.ai-webui/blob/main/.github/workflows/weekly-team-status.md) — 6-month window for team tracking (125 ⭐)
+- [`lablup/backend.ai-webui/daily-test-improver`](https://github.com/lablup/backend.ai-webui/blob/main/.github/workflows/daily-test-improver.md) — 6-month window for iterative test improvement (125 ⭐)
 
 ## Safety Feature 2: `safe_outputs` (3 workflows)
 
 Explicitly restricts which output types the workflow is allowed to produce. Acts as a whitelist.
 
 **Real examples:**
-- [`github/gh-aw/lockfile-stats`](https://github.com/github/gh-aw/blob/main/.github/workflows/lockfile-stats.md) — `[create-pull-request, create-discussion, add-comment, create-issue]` (3,356 ⭐)
 - [`JoshGreenslade/AITraining/workflow-architect`](https://github.com/JoshGreenslade/AITraining/blob/main/.github/workflows/workflow-architect.md) — `[add-comment, add-labels]` — can only comment and label, not create PRs
 - [`nikhilmlal/test_repo/issue-triage.agent`](https://github.com/nikhilmlal/test_repo/blob/main/.github/workflows/issue-triage.agent.md) — `[add-comment]` — comment-only, most restrictive
+
+See also: [`github/gh-aw/lockfile-stats`](https://github.com/github/gh-aw/blob/main/.github/workflows/lockfile-stats.md) uses `[create-pull-request, create-discussion, add-comment, create-issue]` — a broad but explicit output whitelist.
 
 **Use `safe_outputs` when:**
 - The workflow runs on untrusted input (public issues, PRs from forks)
@@ -91,6 +98,7 @@ Some workflows combine safety measures:
 
 - [`JanDeDobbeleer/oh-my-posh/workflow-doctor`](https://github.com/JanDeDobbeleer/oh-my-posh/blob/main/.github/workflows/workflow-doctor.md) — `stop_after: +1mo` + explicit model selection + `workflow_run` trigger (only runs after CI) (21,566 ⭐)
 - [`kaito-project/aikit/daily-test-improver`](https://github.com/kaito-project/aikit/blob/main/.github/workflows/daily-test-improver.md) — `stop_after: +48h` + pre-steps (controlled input) (509 ⭐)
+- [`lablup/backend.ai-webui/daily-test-improver`](https://github.com/lablup/backend.ai-webui/blob/main/.github/workflows/daily-test-improver.md) — `stop_after: +6mo` + pre-steps + discussion trigger (125 ⭐)
 
 ## Rules
 
