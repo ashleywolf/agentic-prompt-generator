@@ -1,8 +1,8 @@
 ---
 # Weekly Report Agent
 # Generates a comprehensive weekly project summary with metrics, highlights, and trends.
-# Based on patterns from: github/copilot-growth/weekly-newsletter, github/copilot-sre,
-#   github/orca/daily-ship-digest, github/ospo-aw org-health
+# Based on patterns from: production team newsletter, enterprise SRE,
+#   team shipping digest, and org health report workflows
 
 name: Weekly Report
 description: Generate a weekly project health and activity report

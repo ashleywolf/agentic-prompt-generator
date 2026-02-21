@@ -1,8 +1,8 @@
 {
   "metadata": {
     "generated": "2026-02-21",
-    "total_repos": 120,
-    "total_workflows": 188,
+    "total_repos": 99,
+    "total_workflows": 164,
     "discovery_method": "GitHub Code Search for .lock.yml in .github/workflows/",
     "search_queries": [
       "path:.github/workflows/ extension:lock.yml \"agentic\" OR \"copilot\" OR \"engine\"",
@@ -287,7 +287,7 @@
     "Okyerema/.github": {
       "url": "https://github.com/Okyerema/.github",
       "stars": 0,
-      "description": "Organization governance, shared workflows, and AI agent configurations for Ɔkyerema",
+      "description": "Organization governance, shared workflows, and AI agent configurations for \u0186kyerema",
       "workflows": [
         {
           "name": "backlog-worker",
@@ -535,7 +535,7 @@
     "TongilKim/TermBridge": {
       "url": "https://github.com/TongilKim/TermBridge",
       "stars": 0,
-      "description": "📱 Remote control for Claude Code CLI from your mobile device. Monitor and send inputs to terminal se",
+      "description": "\ud83d\udcf1 Remote control for Claude Code CLI from your mobile device. Monitor and send inputs to terminal se",
       "workflows": [
         {
           "name": "pr-review",
@@ -833,7 +833,7 @@
     "appwrite/appwrite": {
       "url": "https://github.com/appwrite/appwrite",
       "stars": 0,
-      "description": "Appwrite® - complete cloud infrastructure for your web, mobile and AI apps. Including Auth, Database",
+      "description": "Appwrite\u00ae - complete cloud infrastructure for your web, mobile and AI apps. Including Auth, Database",
       "workflows": [
         {
           "name": "issue-triage",
@@ -901,7 +901,7 @@
     "ashleywolf/ship-it-arcade": {
       "url": "https://github.com/ashleywolf/ship-it-arcade",
       "stars": 0,
-      "description": "🎮 Ship It Arcade — catch packages, dodge bugs, ship code! A retro browser game with a community lead",
+      "description": "\ud83c\udfae Ship It Arcade \u2014 catch packages, dodge bugs, ship code! A retro browser game with a community lead",
       "workflows": [
         {
           "name": "ai-moderator",
@@ -1174,7 +1174,7 @@
     "doggy8088/Apptopia": {
       "url": "https://github.com/doggy8088/Apptopia",
       "stars": 0,
-      "description": "用 Issue 許願，我會用 AI 幫你完成實作",
+      "description": "\u7528 Issue \u8a31\u9858\uff0c\u6211\u6703\u7528 AI \u5e6b\u4f60\u5b8c\u6210\u5be6\u4f5c",
       "workflows": [
         {
           "name": "issue-auto-labeler",
@@ -1307,235 +1307,6 @@
         "status": null,
         "last_run": null,
         "health": null
-      }
-    },
-    "github/actions-results": {
-      "url": "https://github.com/github/actions-results",
-      "stars": 0,
-      "description": "↪️ we get results ↩️",
-      "workflows": [
-        {
-          "name": "weekly-actionsworkers-utilization-agent",
-          "lock_file": "weekly-actionsworkers-utilization-agent.lock.yml",
-          "md_file": "weekly-actionsworkers-utilization-agent.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        }
-      ],
-      "activity": {
-        "status": null,
-        "last_run": null,
-        "health": null
-      }
-    },
-    "github/actions-run-service": {
-      "url": "https://github.com/github/actions-run-service",
-      "stars": 0,
-      "description": "🚀 Still cheaper than SQL",
-      "workflows": [
-        {
-          "name": "orchestration-version-cleanup",
-          "lock_file": "orchestration-version-cleanup.lock.yml",
-          "md_file": "orchestration-version-cleanup.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        }
-      ],
-      "activity": {
-        "status": null,
-        "last_run": null,
-        "health": null
-      }
-    },
-    "github/blog-agent-factory": {
-      "url": "https://github.com/github/blog-agent-factory",
-      "stars": 0,
-      "description": "",
-      "workflows": [
-        {
-          "name": "blog-drafter",
-          "lock_file": "blog-drafter.lock.yml",
-          "md_file": "blog-drafter.md",
-          "archetype": "content-generation",
-          "trigger": "workflow_dispatch",
-          "engine": "copilot",
-          "model": null,
-          "status": "active",
-          "last_verified": "2026-02-21"
-        },
-        {
-          "name": "feedback",
-          "lock_file": "feedback.lock.yml",
-          "md_file": "feedback.md",
-          "archetype": "review",
-          "trigger": "pull_request",
-          "engine": "copilot",
-          "model": null,
-          "status": "active",
-          "last_verified": "2026-02-21"
-        }
-      ],
-      "activity": {
-        "status": "active",
-        "last_run": "2026-02-21",
-        "health": "healthy"
-      }
-    },
-    "github/bloom-dev": {
-      "url": "https://github.com/github/bloom-dev",
-      "stars": 0,
-      "description": "",
-      "workflows": [
-        {
-          "name": "security-compliance-checker",
-          "lock_file": "security-compliance-checker.lock.yml",
-          "md_file": "security-compliance-checker.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        }
-      ],
-      "activity": {
-        "status": null,
-        "last_run": null,
-        "health": null
-      }
-    },
-    "github/code-stats-collector": {
-      "url": "https://github.com/github/code-stats-collector",
-      "stars": 0,
-      "description": "(Alpha) Send code stats to Datadog",
-      "workflows": [
-        {
-          "name": "triage-failed-workflows",
-          "lock_file": "triage-failed-workflows.lock.yml",
-          "md_file": "triage-failed-workflows.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        }
-      ],
-      "activity": {
-        "status": null,
-        "last_run": null,
-        "health": null
-      }
-    },
-    "github/copilot-growth": {
-      "url": "https://github.com/github/copilot-growth",
-      "stars": 0,
-      "description": "",
-      "workflows": [
-        {
-          "name": "cli-bug-report",
-          "lock_file": "cli-bug-report.lock.yml",
-          "md_file": "cli-bug-report.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        },
-        {
-          "name": "weekly-newsletter",
-          "lock_file": "weekly-newsletter.lock.yml",
-          "md_file": "weekly-newsletter.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        }
-      ],
-      "activity": {
-        "status": null,
-        "last_run": null,
-        "health": null
-      }
-    },
-    "github/copilot-indexing-issues-prs": {
-      "url": "https://github.com/github/copilot-indexing-issues-prs",
-      "stars": 0,
-      "description": "Semantic indexing of issues & PRs",
-      "workflows": [
-        {
-          "name": "decision-tracker",
-          "lock_file": "decision-tracker.lock.yml",
-          "md_file": "decision-tracker.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        }
-      ],
-      "activity": {
-        "status": null,
-        "last_run": null,
-        "health": null
-      }
-    },
-    "github/copilot-sdk": {
-      "url": "https://github.com/github/copilot-sdk",
-      "stars": 0,
-      "description": "Multi-platform SDK for integrating GitHub Copilot Agent into apps and services",
-      "workflows": [
-        {
-          "name": "sdk-consistency-review",
-          "lock_file": "sdk-consistency-review.lock.yml",
-          "md_file": "sdk-consistency-review.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        }
-      ],
-      "activity": {
-        "status": null,
-        "last_run": null,
-        "health": null
-      }
-    },
-    "github/copilot-sre": {
-      "url": "https://github.com/github/copilot-sre",
-      "stars": 0,
-      "description": "Hey mate, Datadog, Kusto, GitHub, Sentry MCPs are ready for your service!",
-      "workflows": [
-        {
-          "name": "actions-weekly-slo-report-customer",
-          "lock_file": "actions-weekly-slo-report-customer.lock.yml",
-          "md_file": "actions-weekly-slo-report-customer.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        }
-      ],
-      "activity": {
-        "status": "active",
-        "last_run": "2026-02-21",
-        "health": "healthy"
       }
     },
     "github/gh-aw": {
@@ -1835,293 +1606,6 @@
           "name": "mcp-gateway-log-analyzer",
           "lock_file": "mcp-gateway-log-analyzer.lock.yml",
           "md_file": "mcp-gateway-log-analyzer.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        }
-      ],
-      "activity": {
-        "status": null,
-        "last_run": null,
-        "health": null
-      }
-    },
-    "github/hosted-compute-watchdog": {
-      "url": "https://github.com/github/hosted-compute-watchdog",
-      "stars": 0,
-      "description": "Stands in front of Sun, protecting the world from her heat. It's a Cat+Kraken+Dog = Cradog",
-      "workflows": [
-        {
-          "name": "go-perf-improver",
-          "lock_file": "go-perf-improver.lock.yml",
-          "md_file": "go-perf-improver.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        }
-      ],
-      "activity": {
-        "status": null,
-        "last_run": null,
-        "health": null
-      }
-    },
-    "github/hubber-programs-and-platforms": {
-      "url": "https://github.com/github/hubber-programs-and-platforms",
-      "stars": 0,
-      "description": "Operations Org -> Office of the Chief Operating Officer (OCOO) -> Hubber Enablement",
-      "workflows": [
-        {
-          "name": "issue-triage",
-          "lock_file": "issue-triage.lock.yml",
-          "md_file": "issue-triage.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        }
-      ],
-      "activity": {
-        "status": null,
-        "last_run": null,
-        "health": null
-      }
-    },
-    "github/issues": {
-      "url": "https://github.com/github/issues",
-      "stars": 0,
-      "description": "Product repo for @github/issues",
-      "workflows": [
-        {
-          "name": "aw-triage-issues",
-          "lock_file": "aw-triage-issues.lock.yml",
-          "md_file": "aw-triage-issues.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        }
-      ],
-      "activity": {
-        "status": null,
-        "last_run": null,
-        "health": null
-      }
-    },
-    "github/memex": {
-      "url": "https://github.com/github/memex",
-      "stars": 0,
-      "description": "A flexible ideation canvas, which morphs into a GitHub-aware table view, and which is always up to d",
-      "workflows": [
-        {
-          "name": "weekly-project-report",
-          "lock_file": "weekly-project-report.lock.yml",
-          "md_file": "weekly-project-report.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        }
-      ],
-      "activity": {
-        "status": null,
-        "last_run": null,
-        "health": null
-      }
-    },
-    "github/memex-a11y-sandbox": {
-      "url": "https://github.com/github/memex-a11y-sandbox",
-      "stars": 0,
-      "description": "Sandbox for prototyping Memex accessibility agentic workflows (gh-aw). Experimental — do not use in ",
-      "workflows": [
-        {
-          "name": "a11y-triage",
-          "lock_file": "a11y-triage.lock.yml",
-          "md_file": "a11y-triage.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        }
-      ],
-      "activity": {
-        "status": null,
-        "last_run": null,
-        "health": null
-      }
-    },
-    "github/octodemo": {
-      "url": "https://github.com/github/octodemo",
-      "stars": 0,
-      "description": "fs-tech-tooling",
-      "workflows": [
-        {
-          "name": "create-technical-spec",
-          "lock_file": "create-technical-spec.lock.yml",
-          "md_file": "create-technical-spec.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        }
-      ],
-      "activity": {
-        "status": null,
-        "last_run": null,
-        "health": null
-      }
-    },
-    "github/orca": {
-      "url": "https://github.com/github/orca",
-      "stars": 0,
-      "description": "🐳",
-      "workflows": [
-        {
-          "name": "daily-accessibility-review",
-          "lock_file": "daily-accessibility-review.lock.yml",
-          "md_file": "daily-accessibility-review.md",
-          "archetype": "accessibility",
-          "trigger": "schedule:daily",
-          "engine": "copilot",
-          "model": null,
-          "status": "active",
-          "last_verified": "2026-02-21"
-        },
-        {
-          "name": "daily-ship-digest",
-          "lock_file": "daily-ship-digest.lock.yml",
-          "md_file": "daily-ship-digest.md",
-          "archetype": "reporting",
-          "trigger": "schedule:daily",
-          "engine": "copilot",
-          "model": null,
-          "status": "active",
-          "last_verified": "2026-02-21"
-        }
-      ],
-      "activity": {
-        "status": "active",
-        "last_run": "2026-02-21",
-        "health": "healthy"
-      }
-    },
-    "github/ospo-agentic-workflows": {
-      "url": "https://github.com/github/ospo-agentic-workflows",
-      "stars": 0,
-      "description": "AI-powered agentic workflows for Open Source Program Offices (OSPOs). Built with GitHub Agentic Work",
-      "workflows": [
-        {
-          "name": "org-health",
-          "lock_file": "org-health.lock.yml",
-          "md_file": "org-health.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": "failing",
-          "last_verified": null
-        }
-      ],
-      "activity": {
-        "status": "failing",
-        "last_run": "2026-02-21",
-        "health": "unhealthy"
-      }
-    },
-    "github/public-relations": {
-      "url": "https://github.com/github/public-relations",
-      "stars": 0,
-      "description": "All of the Press",
-      "workflows": [
-        {
-          "name": "ai-sentiment-analysis",
-          "lock_file": "ai-sentiment-analysis.lock.yml",
-          "md_file": "ai-sentiment-analysis.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        }
-      ],
-      "activity": {
-        "status": null,
-        "last_run": null,
-        "health": null
-      }
-    },
-    "github/releases": {
-      "url": "https://github.com/github/releases",
-      "stars": 0,
-      "description": "All things product releases!",
-      "workflows": [
-        {
-          "name": "initiative-release-sync",
-          "lock_file": "initiative-release-sync.lock.yml",
-          "md_file": "initiative-release-sync.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        }
-      ],
-      "activity": {
-        "status": null,
-        "last_run": null,
-        "health": null
-      }
-    },
-    "github/reposd": {
-      "url": "https://github.com/github/reposd",
-      "stars": 0,
-      "description": "The Repos service, providing internal and public REST APIs",
-      "workflows": [
-        {
-          "name": "go-perf-improver",
-          "lock_file": "go-perf-improver.lock.yml",
-          "md_file": "go-perf-improver.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        }
-      ],
-      "activity": {
-        "status": null,
-        "last_run": null,
-        "health": null
-      }
-    },
-    "github/security-reviews": {
-      "url": "https://github.com/github/security-reviews",
-      "stars": 0,
-      "description": "Tracking and triaging incoming requests for reviews by Security at GitHub",
-      "workflows": [
-        {
-          "name": "threat-model-agent",
-          "lock_file": "threat-model-agent.lock.yml",
-          "md_file": "threat-model-agent.md",
           "archetype": null,
           "trigger": null,
           "engine": null,
@@ -2991,86 +2475,6 @@
           "name": "test-aw-instructions",
           "lock_file": "test-aw-instructions.lock.yml",
           "md_file": "test-aw-instructions.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        }
-      ],
-      "activity": {
-        "status": null,
-        "last_run": null,
-        "health": null
-      }
-    },
-    "octodemo-framework/demo_octocat_supply": {
-      "url": "https://github.com/octodemo-framework/demo_octocat_supply",
-      "stars": 0,
-      "description": "GitHub's Plattform Demo",
-      "workflows": [
-        {
-          "name": "auto-analyze-failures",
-          "lock_file": "auto-analyze-failures.lock.yml",
-          "md_file": "auto-analyze-failures.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        }
-      ],
-      "activity": {
-        "status": null,
-        "last_run": null,
-        "health": null
-      }
-    },
-    "octodemo/nullchimp-demo": {
-      "url": "https://github.com/octodemo/nullchimp-demo",
-      "stars": 0,
-      "description": "A demo movie REST-API designed to totally compete with Netflix",
-      "workflows": [
-        {
-          "name": "agentic-analyzer",
-          "lock_file": "agentic-analyzer.lock.yml",
-          "md_file": "agentic-analyzer.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        },
-        {
-          "name": "agentic-refiner",
-          "lock_file": "agentic-refiner.lock.yml",
-          "md_file": "agentic-refiner.md",
-          "archetype": null,
-          "trigger": null,
-          "engine": null,
-          "model": null,
-          "status": null,
-          "last_verified": null
-        }
-      ],
-      "activity": {
-        "status": null,
-        "last_run": null,
-        "health": null
-      }
-    },
-    "octodemo/octocat_supply-studious-giggle": {
-      "url": "https://github.com/octodemo/octocat_supply-studious-giggle",
-      "stars": 0,
-      "description": "",
-      "workflows": [
-        {
-          "name": "daily-repo-activity-summary",
-          "lock_file": "daily-repo-activity-summary.lock.yml",
-          "md_file": "daily-repo-activity-summary.md",
           "archetype": null,
           "trigger": null,
           "engine": null,

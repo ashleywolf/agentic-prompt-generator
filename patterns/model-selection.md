@@ -143,7 +143,7 @@ steps:
         4. Generate a status report with timeline projections
 ```
 
-**copilot-sre/actions-weekly-slo-report:**
+**Enterprise SRE weekly SLO report:**
 ```yaml
 steps:
   - agent:
@@ -227,9 +227,9 @@ steps:
 
 ---
 
-## Real-World Model Usage: The ospo-aw Analysis
+## Real-World Model Usage: Production Analysis
 
-> **Finding: 72 out of 79 production workflows in ospo-aw use the default model**, even for complex 15–26KB prompts. Only 7 use `claude-opus-4.5`.
+> **Finding: 72 out of 79 production workflows use the default model**, even for complex 15–26KB prompts. Only 7 use `claude-opus-4.5`.
 
 This reveals a common mismatch — many workflows that would benefit from a stronger model are running on default because nobody explicitly chose a model.
 
@@ -250,7 +250,7 @@ Ask these questions:
 3. **Is the workflow high-frequency?** If it runs 10+ times/day, the cost of opus adds up — stick with default or codex-mini.
 4. **Is the task mechanical?** Labeling, routing, and classification don't improve with opus.
 
-*Source: github/ospo-aw issue #885 — analysis of 79 production workflows*
+*Source: Analysis of 79 production workflows*
 
 ---
 

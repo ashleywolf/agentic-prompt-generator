@@ -1,6 +1,6 @@
 # Agentic Prompt Generator
 
-A pattern library for [GitHub Agentic Workflows](https://github.com/github/gh-aw) — backed by data from **120+ public repos** and **188 compiled workflows** across GitHub.
+A pattern library for [GitHub Agentic Workflows](https://github.com/github/gh-aw) — backed by data from **100+ public repos** and **165 compiled workflows** across GitHub.
 
 > **Problem:** Writing a prompt for an agentic workflow that works on the first try is hard. You don't know that a weekly report needs data pre-fetched in a bash step, that a triage workflow should use `gpt-5.1-codex-mini` instead of the default model, or that `create-discussion` with `close-older` is the standard pattern for recurring reports.
 
@@ -39,13 +39,13 @@ This library documents what's actually working in production, organized around t
 | [Content Pipeline](templates/content-pipeline.md) | `workflow_dispatch` | configurable | 45min | Multi-stage content creation with chaining |
 | [Enterprise SRE](templates/enterprise-sre.md) | `schedule: weekly` | claude-opus-4.6 | 90min | SLO reports with external service integration |
 
-## Top Rules (from analyzing 79 ospo-aw + 40 public workflows)
+## Top Rules (from analyzing 100+ production workflows)
 
 1. **If >3 API searches → add a pre-step.** Agents hit the 10KB MCP payload limit. Pre-fetch data deterministically to `/tmp/` and tell the agent "DO NOT query the API — read from /tmp/".
 
 2. **Match model to task.** Classification → `gpt-5.1-codex-mini`. Planning/narrative → `claude-opus-4.6`. Investigation → `claude-sonnet-4.5`. Everything else → default.
 
-3. **Always define safe-outputs.** 6/79 ospo-aw workflows had none — the agent couldn't write results anywhere.
+3. **Always define safe-outputs.** 6/79 production workflows had none — the agent couldn't write results anywhere.
 
 4. **Use `create-discussion` for recurring reports.** With `close-older: true` and `expires: 14`. Issues are for actionable items.
 
@@ -65,9 +65,7 @@ This library documents what's actually working in production, organized around t
 | [JanDeDobbeleer/oh-my-posh](catalog/oh-my-posh.md) | — | workflow-doctor | CI Doctor | 🟡 |
 | [Olino3/forge](catalog/olino3-forge.md) | — | 4 workflows | Mixed (best imports) | 🟢 |
 | [devantler-tech/ksail](catalog/devantler-tech-ksail.md) | — | 5 workflows | Mixed (multi-phase) | 🟢 |
-| [github/copilot-sre](catalog/github-copilot-sre.md) | — | SLO report | Enterprise SRE | 🟢 |
-| [github/orca](catalog/github-orca.md) | — | a11y + digest | Daily Improver + Report | 🟢 |
-| [github/blog-agent-factory](catalog/github-blog-agent-factory.md) | — | drafter + feedback | Content Pipeline | 🟢 |
+
 | [f/prompts.chat](catalog/f-prompts-chat.md) | — | spam-check | Moderation | 🟢 |
 
 [Full activity report →](data/activity-report.md)
@@ -84,7 +82,7 @@ This library maintains itself using 3 agentic workflows:
 
 ## Data
 
-- [`data/registry.json`](data/registry.json) — Machine-readable catalog of all 120 repos + 188 workflows
+- [`data/registry.json`](data/registry.json) — Machine-readable catalog of all 100 repos + 165 workflows
 - [`data/activity-report.md`](data/activity-report.md) — Health dashboard for tracked repos
 
 ## Discovery Methodology
@@ -96,7 +94,6 @@ See [DISCOVERY.md](DISCOVERY.md) for how we found these repos.
 - [github/gh-aw](https://github.com/github/gh-aw) — The agentic workflow compiler and runtime
 - [githubnext/agentics](https://github.com/githubnext/agentics) — Official sample pack
 - [awesome-agentic-workflows](https://github.com/ashleywolf/awesome-agentic-workflows) — Curated list of workflows and patterns
-- [ospo-aw#885](https://github.com/github/ospo-aw/issues/885) — The analysis that inspired this library
 
 ## License
 

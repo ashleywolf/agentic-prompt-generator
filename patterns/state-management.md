@@ -112,7 +112,7 @@ steps:
 
 **When:** You track multiple resources and need organized, auto-expiring state.
 
-### Production Example — copilot-sre
+### Production Example — Enterprise SRE Workflow
 
 Tracks SLO compliance per service with 35-day retention:
 

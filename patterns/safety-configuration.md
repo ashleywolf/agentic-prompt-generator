@@ -397,7 +397,7 @@ outputs:
 
 ## The Missing `safe-outputs` Problem
 
-> **Finding: 6 out of 79 ospo-aw workflows have NO `safe-outputs:` defined at all** — the agent literally can't write results anywhere.
+> **Finding: 6 out of 79 production workflows have NO `safe-outputs:` defined at all** — the agent literally can't write results anywhere.
 
 A workflow without safe outputs will run, consume model tokens, and then silently discard its work because it has no authorized output channel. This is one of the most common configuration mistakes.
 
@@ -428,7 +428,7 @@ outputs:
   - type: noop    # Workflow is intentionally output-free (e.g., dry-run testing)
 ```
 
-*Source: Analysis of 79 production workflows in github/ospo-aw*
+*Source: Analysis of 79 production workflows*
 
 ---
 

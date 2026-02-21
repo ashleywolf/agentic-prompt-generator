@@ -14,7 +14,7 @@ You don't need all four every time, but the more complex the task, the more stru
 |---|---|---|---|
 | **Ultra-concise** | 1–20 | Simple classification, labeling | pelikhan/issue-triage |
 | **Standard** | 20–80 | Most workflows — triage, review, reports | workflow-doctor, org-health |
-| **Extensive** | 80–200+ | Complex multi-phase, enterprise, personality-driven | delight, copilot-sre, grumpy-reviewer |
+| **Extensive** | 80–200+ | Complex multi-phase, enterprise, personality-driven | delight, enterprise-sre, grumpy-reviewer |
 
 **Rule of thumb:** Start short. Add structure only when the agent's output quality demands it.
 
@@ -429,7 +429,7 @@ prompt: |
 
 ## Prompt Size Inflation
 
-> **Finding: The top 15 ospo-aw prompts are 10–26KB** — extremely long. Much of that content is repeated formatting rules, writing style guides, and output structure that appear across multiple workflows.
+> **Finding: The top 15 production prompts are 10–26KB** — extremely long. Much of that content is repeated formatting rules, writing style guides, and output structure that appear across multiple workflows.
 
 ### The Problem
 
@@ -478,7 +478,7 @@ steps:
 
 ### Rule: Don't Hardcode Mutable Context
 
-> **Finding: 10 ospo-aw workflows have hardcoded `@username` lists in prompts** — up to 51 unique mentions per workflow. When team members change, the prompt source must be edited.
+> **Finding: 10 production workflows have hardcoded `@username` lists in prompts** — up to 51 unique mentions per workflow. When team members change, the prompt source must be edited.
 
 ```yaml
 # ❌ Bad — hardcoded team list in the prompt
@@ -506,7 +506,7 @@ steps:
 
 > **Rule: Use `workflow_dispatch` inputs with defaults for team member lists, repo lists, and other context that changes.** This lets operators update context without editing prompt source.
 
-*Source: Analysis of 79 production workflows in github/ospo-aw*
+*Source: Analysis of 79 production workflows*
 
 ---
 

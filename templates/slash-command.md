@@ -2,7 +2,7 @@
 # Slash Command Agent
 # Responds to custom slash commands in issue and PR comments.
 # Based on patterns from: devantler-tech/ksail/plan, github/gh-aw/pr-nitpick-reviewer,
-#   github/blog-agent-factory/feedback
+#   a content pipeline feedback workflow
 
 name: Slash Command Handler
 description: Respond to custom slash commands in issues and PRs

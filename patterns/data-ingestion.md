@@ -171,7 +171,7 @@ steps:
 
 **When:** The agent needs data from a cloud service (Azure, AWS, Datadog, etc.).
 
-**Production example:** [copilot-sre](https://github.com) — authenticates to Azure for SLO data.
+**Production example:** An enterprise SRE workflow — authenticates to Azure for SLO data.
 
 ```yaml
 steps:
@@ -253,7 +253,7 @@ Already pre-fetched but agent needs more?
 
 ## The 10KB MCP Payload Limit
 
-> **Finding: 45 out of 79 workflows in the ospo-aw repo don't prefetch data.** The agent discovers everything via MCP tool calls at runtime.
+> **Finding: 45 out of 79 production workflows don't prefetch data.** The agent discovers everything via MCP tool calls at runtime.
 
 This causes three cascading failures:
 
@@ -302,7 +302,7 @@ steps:
 
 > **Rule: Always include "Add a 1–2 second delay between API calls" in the prompt or pre-step when the workflow has >3 search patterns.**
 
-*Source: Analysis of 79 production workflows in github/ospo-aw*
+*Source: Analysis of 79 production workflows*
 
 ---
 

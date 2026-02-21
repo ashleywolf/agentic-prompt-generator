@@ -1,7 +1,7 @@
 ---
 # Enterprise SRE Agent
 # Comprehensive SLO reporting, anomaly detection, and incident correlation for production services.
-# Based on patterns from: github/copilot-sre/actions-weekly-slo-report-customer
+# Based on patterns from: production enterprise SRE workflows
 
 name: Enterprise SRE Report
 description: Weekly SLO report with anomaly detection, incident correlation, and compliance tracking

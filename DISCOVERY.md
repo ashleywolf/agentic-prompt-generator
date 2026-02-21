@@ -1,6 +1,6 @@
 # Discovery Methodology
 
-How we found 120 repos with 188 agentic workflows across GitHub.
+How we found 100 repos with 165 agentic workflows across GitHub.
 
 ## The Signal: `.lock.yml` Files
 
@@ -23,7 +23,7 @@ path:.github/workflows extension:lock.yml "gh-aw" OR "agentic-workflow"
 path:.github/workflows "engine: copilot" language:markdown
 ```
 
-After deduplication by repo: **120 unique repositories** with **188 workflow files**.
+After deduplication by repo: **100 unique repositories** with **165 workflow files**.
 
 ### GitHub Repository Search (supplemental)
 
@@ -42,10 +42,10 @@ GET /repos/{owner}/{repo}/actions/runs
 
 Then filtered for runs where `path` matches `*.lock.yml` to confirm recent agentic workflow activity. This verified:
 
-- **11 repos actively running** with recent successful runs
+- **8 repos actively running** with recent successful runs
 - **2 repos degraded** (mostly skipped or action_required)
 - **2 repos failing** (100% failure rate)
-- **105 repos unverified** (awaiting health-check workflow)
+- **88 repos unverified** (awaiting health-check workflow)
 
 ## Workflow Definition Reading
 
@@ -61,7 +61,7 @@ And extracted structured data: triggers, engine, model, tools, safe-outputs, imp
 
 | Org | Repos | Workflows | Notable |
 |-----|-------|-----------|---------|
-| **github** | 24 | 49 | gh-aw (23), copilot-sre, orca, blog-agent-factory, security-reviews |
+| **github** | 3 | 42 | gh-aw (23), gh-aw-firewall, gh-aw-mcpg |
 | **microsoft** | 6 | 8 | wassette (3), FluidFramework, pxt-arcade, Web-Dev-For-Beginners |
 | **TeamFlint-Dev** | 1 | 7 | vibe-coding-cn |
 | **devantler-tech** | 2 | 5 | ksail (4), monorepo |

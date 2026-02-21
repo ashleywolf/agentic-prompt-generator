@@ -1,7 +1,7 @@
 ---
 # Content Pipeline Agent
 # Processes content through a multi-stage pipeline: drafting, editing, enrichment, and publishing.
-# Based on patterns from: github/blog-agent-factory (blog-drafter → blog-linker)
+# Based on patterns from: a content pipeline workflow (blog-drafter → blog-linker)
 
 name: Content Pipeline
 description: Multi-stage content processing pipeline with quality gates and workflow chaining
