@@ -1,99 +1,114 @@
 # Agentic Prompt Generator
 
-A pattern library for [GitHub Agentic Workflows](https://github.com/github/gh-aw) — backed by data from **100+ public repos** and **165 compiled workflows** across GitHub.
+**Data-driven patterns for writing GitHub Copilot agentic workflow prompts.**
 
-> **Problem:** Writing a prompt for an agentic workflow that works on the first try is hard. You don't know that a weekly report needs data pre-fetched in a bash step, that a triage workflow should use `gpt-5.1-codex-mini` instead of the default model, or that `create-discussion` with `close-older` is the standard pattern for recurring reports.
-
-This library documents what's actually working in production, organized around the **decisions you make when writing a workflow**.
+Writing effective agentic workflow prompts is hard. There's no spec, limited examples, and the difference between a workflow that runs reliably and one that flails is often a single sentence in the prompt. This project fixes that by scanning **269 public repos** running real agentic workflows, extracting what works, and distilling it into reusable pattern cards.
 
 ## Quick Start
 
-1. **Pick your archetype** → [Workflow Archetypes](patterns/workflow-archetypes.md)
-2. **Copy a starter template** → [Templates](templates/)
-3. **Customize using pattern cards** → [Patterns](patterns/)
+1. **Pick a pattern** — Browse the [pattern cards](#pattern-cards) below to find what matches your use case.
+2. **Copy the template** — Each card links to a starter `.md` prompt you can drop into `.github/workflows/`.
+3. **Customize** — Fill in repo-specific details and push. The workflow runs on the trigger you choose.
 
-## Pattern Cards (9 Decision Areas)
+## Pattern Cards
 
-| # | Card | Question It Answers |
-|---|------|---------------------|
-| 1 | [Data Ingestion](patterns/data-ingestion.md) | "My workflow needs a lot of data. How do I feed it?" |
-| 2 | [Model Selection](patterns/model-selection.md) | "Which model should I use?" |
-| 3 | [Trigger Selection](patterns/trigger-selection.md) | "When should my workflow run?" |
-| 4 | [Output Selection](patterns/output-selection.md) | "Where should results go?" |
-| 5 | [State Management](patterns/state-management.md) | "How do I remember things across runs?" |
-| 6 | [Prompt Structure](patterns/prompt-structure.md) | "How do I write the actual prompt?" |
-| 7 | [Safety Configuration](patterns/safety-configuration.md) | "How do I lock this down?" |
-| 8 | [Shared Components](patterns/shared-components.md) | "How do I reuse logic across workflows?" |
-| 9 | [Workflow Archetypes](patterns/workflow-archetypes.md) | "What type of workflow am I building?" |
+| Card | What It Covers |
+|------|---------------|
+| [Data Ingestion](patterns/data-ingestion.md) | How to feed context to the agent (file globs, API output, issue bodies) |
+| [Model Selection](patterns/model-selection.md) | When to override the default model and which to pick |
+| [Trigger Selection](patterns/trigger-selection.md) | Choosing between `issues`, `schedule`, `push`, `pull_request`, and others |
+| [Output Selection](patterns/output-selection.md) | Where the agent writes results (comments, PRs, commits, issues) |
+| [State Management](patterns/state-management.md) | Handling multi-step workflows, `stop-after`, and continuation |
+| [Prompt Structure](patterns/prompt-structure.md) | Anatomy of an effective `.md` prompt file |
+| [Safety Configuration](patterns/safety-configuration.md) | Guardrails, permissions, and failure modes |
+| [Shared Components](patterns/shared-components.md) | Reusable `copilot-setup-steps` and pre-step patterns |
+| [Workflow Archetypes](patterns/workflow-archetypes.md) | Common workflow types seen across production repos |
 
-## Starter Templates (8 Archetypes)
+## What the Scan Found
 
-| Template | Trigger | Model | Timeout | Use Case |
-|----------|---------|-------|---------|----------|
-| [Issue Triage](templates/issue-triage.md) | `issues:[opened]` | default | 10min | Classify, label, and comment on new issues |
-| [CI Doctor](templates/ci-doctor.md) | `workflow_run` (failure) | claude-sonnet-4.5 | 30min | Investigate CI failures and report root cause |
-| [Daily Improver](templates/daily-improver.md) | `schedule: daily` | default | 30min | Incremental code improvements via draft PRs |
-| [Weekly Report](templates/weekly-report.md) | `schedule: weekly` | opus (recommended) | 60min | Team/org status reports with pre-fetched data |
-| [Slash Command](templates/slash-command.md) | `slash_command` | default | 15min | On-demand `/commands` in issues and PRs |
-| [Moderation](templates/moderation.md) | `issues/PR:[opened]` | codex-mini | 5min | Spam detection and content moderation |
-| [Content Pipeline](templates/content-pipeline.md) | `workflow_dispatch` | configurable | 45min | Multi-stage content creation with chaining |
-| [Enterprise SRE](templates/enterprise-sre.md) | `schedule: weekly` | claude-opus-4.6 | 90min | SLO reports with external service integration |
+All numbers below come from [`data/scan-results.json`](data/scan-results.json), generated by scanning public GitHub repos.
 
-## Top Rules (from analyzing 100+ production workflows)
+| Metric | Value |
+|--------|-------|
+| Public repos discovered | 269 |
+| Repos with activity in last 90 days | 246 |
+| Total compiled workflows | 679 |
+| Workflows with readable `.md` source | 661 |
+| Workflows using pre-steps | 96 (14%) |
+| Workflows with no pre-steps (pure MCP) | 583 (86%) |
+| Workflows using `stop-after` | 61 |
+| Unique workflow names | 398 |
 
-1. **If >3 API searches → add a pre-step.** Agents hit the 10KB MCP payload limit. Pre-fetch data deterministically to `/tmp/` and tell the agent "DO NOT query the API — read from /tmp/".
+### Trigger Distribution
 
-2. **Match model to task.** Classification → `gpt-5.1-codex-mini`. Planning/narrative → `claude-opus-4.6`. Investigation → `claude-sonnet-4.5`. Everything else → default.
+| Trigger | Count |
+|---------|-------|
+| `issues` | 467 |
+| `workflow_dispatch` | 467 |
+| `schedule` | 395 |
+| `pull_request` | 102 |
+| `discussion` | 75 |
+| `push` | 57 |
+| `slash_command` | 35 |
+| `workflow_run` | 21 |
 
-3. **Always define safe-outputs.** 6/79 production workflows had none — the agent couldn't write results anywhere.
+### Most Common Workflow Types
 
-4. **Use `create-discussion` for recurring reports.** With `close-older: true` and `expires: 14`. Issues are for actionable items.
+| Workflow | Repos Using It |
+|----------|---------------|
+| `daily-repo-status` | 57 |
+| `issue-triage` | 18 |
+| `weekly-research` | 17 |
+| `ci-doctor` | 16 |
+| `update-docs` | 14 |
+| `daily-test-improver` | 13 |
+| `code-simplifier` | 13 |
+| `upstream-monitor` | 11 |
+| `typo-checker` | 10 |
+| `daily-perf-improver` | 9 |
 
-5. **Extract shared formatting into imports.** Top prompts are 10-26KB with repeated rules. Keep workflow-specific prompts focused on the *what*.
+### Notable Public Repos
 
-6. **Add rate-limit delays.** Include "Add a 1-2 second delay between API calls" when prompts have >3 search patterns.
+Repos with ≥1,000 stars running agentic workflows in production:
 
-7. **Use `stop-after: +30d`.** Auto-expires scheduled workflows if they break, preventing silent waste.
-
-## Real-World Examples (Catalog)
-
-| Repo | ⭐ | Workflows | Archetype | Health |
-|------|----|-----------|-----------|--------|
-| [appwrite/appwrite](catalog/appwrite-appwrite.md) | 44K | issue-triage | Issue Triage (batch) | 🟢 |
-| [github/gh-aw](catalog/github-gh-aw.md) | 3.3K | 23 workflows | Mixed | 🟢 |
-| [BabylonJS/Babylon.js](catalog/babylonjs-babylon.md) | — | code-simplifier | Daily Improver | 🟢 |
-| [JanDeDobbeleer/oh-my-posh](catalog/oh-my-posh.md) | — | workflow-doctor | CI Doctor | 🟡 |
-| [Olino3/forge](catalog/olino3-forge.md) | — | 4 workflows | Mixed (best imports) | 🟢 |
-| [devantler-tech/ksail](catalog/devantler-tech-ksail.md) | — | 5 workflows | Mixed (multi-phase) | 🟢 |
-
-| [f/prompts.chat](catalog/f-prompts-chat.md) | — | spam-check | Moderation | 🟢 |
-
-[Full activity report →](data/activity-report.md)
+| Repository | Stars | Workflows | What They Run |
+|-----------|-------|-----------|--------------|
+| [f/prompts.chat](https://github.com/f/prompts.chat) | 145K | 1 | `spam-check` |
+| [appwrite/appwrite](https://github.com/appwrite/appwrite) | 54K | 1 | `issue-triage` |
+| [apolloconfig/apollo](https://github.com/apolloconfig/apollo) | 29K | 1 | `issue-triage` |
+| [BabylonJS/Babylon.js](https://github.com/BabylonJS/Babylon.js) | 25K | 1 | `code-simplifier` |
+| [dotnet/maui](https://github.com/dotnet/maui) | 23K | 1 | `daily-repo-status` |
+| [RustPython/RustPython](https://github.com/RustPython/RustPython) | 21K | 1 | `upgrade-pylib` |
+| [JanDeDobbeleer/oh-my-posh](https://github.com/JanDeDobbeleer/oh-my-posh) | 21K | 1 | `workflow-doctor` |
+| [phpstan/phpstan](https://github.com/phpstan/phpstan) | 13K | 1 | `generate-error-docs` |
+| [github/copilot-sdk](https://github.com/github/copilot-sdk) | 7K | 2 | `issue-triage`, `sdk-consistency-review` |
+| [evcc-io/evcc](https://github.com/evcc-io/evcc) | 6K | 1 | `triage-agent` |
+| [dotnet/aspire](https://github.com/dotnet/aspire) | 5K | 1 | `daily-repo-status` |
+| [erigontech/erigon](https://github.com/erigontech/erigon) | 3K | 1 | `daily-repo-status` |
+| [github/gh-aw](https://github.com/github/gh-aw) | 3K | 120 | Catalog of workflow templates |
+| [ZSWatch/ZSWatch](https://github.com/ZSWatch/ZSWatch) | 3K | 1 | `docs-pr-analyze` |
+| [apache/cloudstack](https://github.com/apache/cloudstack) | 2K | 2 | `issue-triage-agent`, `daily-repo-status` |
+| [llm-d/llm-d](https://github.com/llm-d/llm-d) | 2K | 2 | `link-checker`, `typo-checker` |
+| [opencollective/opencollective](https://github.com/opencollective/opencollective) | 2K | 1 | `issue-triage-agent` |
+| [npgsql/efcore.pg](https://github.com/npgsql/efcore.pg) | 1K | 1 | `sync-to-latest-ef` |
 
 ## Self-Updating
 
-This library maintains itself using 3 agentic workflows:
+The scan runs weekly via the [`scan-agentic-workflows`](.github/workflows/) workflow, which:
 
-| Workflow | Schedule | What It Does |
-|----------|----------|-------------|
-| [discover-workflows](.github/workflows/discover-workflows.md) | Weekly (Mon) | Searches GitHub for new repos with `.lock.yml` files |
-| [analyze-patterns](.github/workflows/analyze-patterns.md) | Weekly (Wed) | Reads new workflow definitions, extracts patterns, updates library via PR |
-| [health-check](.github/workflows/health-check.md) | Monthly (1st) | Verifies existing workflows are still active, removes dead entries |
+1. Searches GitHub for public repos with agentic workflow files
+2. Verifies each repo is public and has recent activity
+3. Extracts workflow metadata (triggers, models, pre-steps, success rates)
+4. Writes results to [`data/scan-results.json`](data/scan-results.json)
+
+See [DISCOVERY.md](DISCOVERY.md) for the full scanning methodology.
 
 ## Data
 
-- [`data/registry.json`](data/registry.json) — Machine-readable catalog of all 100 repos + 165 workflows
-- [`data/activity-report.md`](data/activity-report.md) — Health dashboard for tracked repos
-
-## Discovery Methodology
-
-See [DISCOVERY.md](DISCOVERY.md) for how we found these repos.
-
-## Related
-
-- [github/gh-aw](https://github.com/github/gh-aw) — The agentic workflow compiler and runtime
-- [githubnext/agentics](https://github.com/githubnext/agentics) — Official sample pack
-- [awesome-agentic-workflows](https://github.com/ashleywolf/awesome-agentic-workflows) — Curated list of workflows and patterns
+| File | Description |
+|------|-------------|
+| [`data/scan-results.json`](data/scan-results.json) | Complete scan output — every repo, workflow, trigger, model, and run history |
+| [`scripts/scan.sh`](scripts/scan.sh) | The scan script |
 
 ## License
 

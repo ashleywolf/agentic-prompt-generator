@@ -1,382 +1,85 @@
-# Output Selection — Where should results go?
-
-## The Key Insight
-
-> **`create-discussion` with `close-older: true` is THE pattern for recurring reports.**
-
-It gives you a clean, auto-archiving feed of reports without issue/PR clutter.
-
----
-
-## Output Overview
-
-| Output | Best For | Recurring? | Key Options |
-|---|---|---|---|
-| `create-discussion` | Reports, summaries, dashboards | ✅ Yes | `close-older`, `expires`, `category` |
-| `create-issue` | Actionable items, bugs, tasks | ⚠️ Sometimes | `title-prefix`, `labels`, `expires` |
-| `add-comment` | Feedback on existing items | ❌ No | `target`, `hide-older-comments` |
-| `create-pull-request` | Code changes | ❌ No | `draft`, `if-no-changes` |
-| `create-pull-request-review-comment` | Inline code review | ❌ No | `max` |
-| `add-labels` | Classification | ❌ No | `allowed` |
-| `dispatch-workflow` | Pipeline chaining | ❌ No | `workflow`, `inputs` |
-| `upload-asset` | Charts, images, artifacts | ❌ No | `path` |
-| noop (Job Summary) | Logs, debugging | ❌ No | — |
+# Output Selection
 
----
-
-## Pattern 1: create-discussion
+> **"Where should results go?"**
 
-**When:** Recurring reports, weekly summaries, dashboards, SLO reviews.
+## The Numbers
 
-**This is the single most important output pattern.** If your workflow generates a report on a schedule, use discussions.
+From **679 workflows** across **269 repos**, workflows produce output through several mechanisms. The scan tracks `safe_outputs` declarations (explicit output type restrictions) but most workflows use the platform defaults.
 
-### Why Discussions > Issues for Reports
-- Issues clutter your backlog and confuse triage
-- Discussions have categories (organize by type)
-- `close-older: true` auto-archives previous reports
-- Team members can reply/react without affecting issue counts
-
-### Production Example — Weekly Report
+| Output Type | Description | When to Use |
+|-------------|-------------|-------------|
+| `add-comment` | Comment on the triggering issue/PR | Feedback, triage results, analysis |
+| `add-labels` | Apply labels to issues/PRs | Classification, triage |
+| `create-pull-request` | Open a new PR with changes | Code fixes, doc updates |
+| `create-issue` | File a new issue | Findings from scheduled scans |
+| `create-discussion` | Post to Discussions | Reports, summaries |
+| `dispatch-workflow` | Trigger another workflow | Chaining, orchestration |
+| `upload-asset` | Upload files | Reports, artifacts |
+| `noop` | No output (dry run) | Testing, validation |
 
-```yaml
-outputs:
-  - type: create-discussion
-    config:
-      category: "Reports"
-      title-prefix: "Weekly Health Report"
-      close-older: true    # Auto-close last week's report
-      expires: "14d"       # Auto-lock after 14 days
-```
+## Decision Table
 
-### Production Example — Daily SLO Dashboard
+| Your workflow does… | Best output | Why |
+|---------------------|-------------|-----|
+| Issue triage | `add-comment` + `add-labels` | Respond inline, classify |
+| Daily status report | `create-issue` or `create-discussion` | Persistent, searchable |
+| CI failure diagnosis | `add-comment` | Comment on the failing PR/issue |
+| Code improvement | `create-pull-request` | Propose changes for review |
+| Spam/moderation check | `add-labels` | Fast, automatable |
+| Research/analysis | `create-discussion` | Long-form, threaded |
+| Pipeline orchestration | `dispatch-workflow` | Chain workflows together |
 
-```yaml
-outputs:
-  - type: create-discussion
-    config:
-      category: "SLO"
-      title-prefix: "Daily SLO Report"
-      close-older: true
-      expires: "7d"
-```
+## Pattern 1: Comment + Labels (Issue Triage)
 
-### close-older Behavior
+The most common output pattern. Agent reads an issue, adds a comment with analysis, and applies labels.
 
-When `close-older: true` is set:
-1. The workflow creates a new discussion
-2. It finds any previous discussion with the same `title-prefix`
-3. It closes (locks) the older discussion
-4. Result: You always have exactly **one active report** per category
+**Real examples:**
+- [`appwrite/appwrite/issue-triage`](https://github.com/appwrite/appwrite/blob/main/.github/workflows/issue-triage.md) — Labels + comment on every issue (54,898 ⭐)
+- [`apolloconfig/apollo/issue-triage`](https://github.com/apolloconfig/apollo/blob/main/.github/workflows/issue-triage.md) — Categorize and label (29,779 ⭐)
+- [`evcc-io/evcc/triage-agent`](https://github.com/evcc-io/evcc/blob/main/.github/workflows/triage-agent.md) — Triage with labels (6,169 ⭐)
+- [`foxminchan/BookWorm/issue-triage`](https://github.com/foxminchan/BookWorm/blob/main/.github/workflows/issue-triage.md) — Label and categorize (475 ⭐)
 
-```
-Week 1: "Weekly Health Report — Jan 6" (active)
-Week 2: "Weekly Health Report — Jan 13" (active) → "Weekly Health Report — Jan 6" (closed)
-Week 3: "Weekly Health Report — Jan 20" (active) → "Weekly Health Report — Jan 13" (closed)
-```
-
----
-
-## Pattern 2: create-issue
-
-**When:** The agent identifies something that needs human action — a bug, a task, a follow-up.
-
-### Production Example — Actionable Findings
+## Pattern 2: Create PR (Code Changes)
 
-```yaml
-outputs:
-  - type: create-issue
-    config:
-      title-prefix: "[auto] "
-      labels: ["automated", "needs-review"]
-      expires: "30d"       # Auto-close if not acted on in 30 days
-```
+Agent makes code changes and opens a PR for human review.
 
-### Production Example — Daily Improvement Issues
+**Real examples:**
+- [`BabylonJS/Babylon.js/code-simplifier`](https://github.com/BabylonJS/Babylon.js/blob/main/.github/workflows/code-simplifier.md) — Simplifies code, opens PR (25,113 ⭐)
+- [`RustPython/RustPython/upgrade-pylib`](https://github.com/RustPython/RustPython/blob/main/.github/workflows/upgrade-pylib.md) — Upgrades Python lib, opens PR (21,810 ⭐)
+- [`ohcnetwork/care_fe/daily-playwright-improver`](https://github.com/ohcnetwork/care_fe/blob/main/.github/workflows/daily-playwright-improver.md) — Improves tests, submits PR (606 ⭐)
+- [`kaito-project/aikit/daily-test-improver`](https://github.com/kaito-project/aikit/blob/main/.github/workflows/daily-test-improver.md) — Test improvements as PRs (509 ⭐)
 
-```yaml
-outputs:
-  - type: create-issue
-    config:
-      title-prefix: "[daily-qa] "
-      labels: ["test-coverage", "automated"]
-      max: 3               # Don't create more than 3 issues per run
-      expires: "14d"
-```
+## Pattern 3: Create Issue (Scheduled Findings)
 
-**Gotchas:**
-- Always use `title-prefix` so humans can filter automated issues
-- Always set `max` to prevent runaway issue creation
-- Always set `expires` so stale issues auto-close
-- Use `labels` so automated issues are easy to find/filter
+Scheduled workflows that discover issues and file them for humans.
 
----
+**Real examples:**
+- [`dotnet/maui/daily-repo-status`](https://github.com/dotnet/maui/blob/main/.github/workflows/daily-repo-status.md) — Daily health report as issue (23,180 ⭐)
+- [`dotnet/aspire/daily-repo-status`](https://github.com/dotnet/aspire/blob/main/.github/workflows/daily-repo-status.md) — Status posted as issue (5,457 ⭐)
+- [`erigontech/erigon/daily-repo-status`](https://github.com/erigontech/erigon/blob/main/.github/workflows/daily-repo-status.md) — Daily status issue (3,531 ⭐)
 
-## Pattern 3: add-comment
+## Pattern 4: Create Discussion (Reports & Analysis)
 
-**When:** Responding to an issue or PR that triggered the workflow.
+Long-form output that benefits from threaded responses.
 
-### Production Example — Triage Response
+**Real examples:**
+- [`github/gh-aw/lockfile-stats`](https://github.com/github/gh-aw/blob/main/.github/workflows/lockfile-stats.md) — Posts analysis to Discussions (3,356 ⭐). This workflow declares `safe_outputs: [create-pull-request, create-discussion, add-comment, create-issue]` — one of few with explicit output restrictions.
 
-```yaml
-outputs:
-  - type: add-comment
-    config:
-      target: triggering        # Comment on the issue/PR that triggered this
-      hide-older-comments: true  # Collapse previous bot comments
-```
+## Pattern 5: Safe Outputs (Restricting What the Agent Can Do)
 
-### Production Example — CI Failure Diagnosis
+The `safe_outputs` field restricts which output types a workflow is allowed to use. Only 3 workflows in the scan declare explicit `safe_outputs`:
 
-```yaml
-outputs:
-  - type: add-comment
-    config:
-      target: triggering
-      hide-older-comments: true
-```
+- [`github/gh-aw/lockfile-stats`](https://github.com/github/gh-aw/blob/main/.github/workflows/lockfile-stats.md) — `[create-pull-request, create-discussion, add-comment, create-issue]` (3,356 ⭐)
+- [`JoshGreenslade/AITraining/workflow-architect`](https://github.com/JoshGreenslade/AITraining/blob/main/.github/workflows/workflow-architect.md) — `[add-comment, add-labels]`
+- [`nikhilmlal/test_repo/issue-triage.agent`](https://github.com/nikhilmlal/test_repo/blob/main/.github/workflows/issue-triage.agent.md) — `[add-comment]`
 
-### hide-older-comments Behavior
+**Most workflows rely on the platform's default output permissions.** Use `safe_outputs` when you need to lock down a workflow to only specific actions.
 
-When `hide-older-comments: true`:
-- Previous comments from this workflow are minimized (collapsed)
-- Only the latest comment is fully visible
-- Prevents long threads of bot comments from cluttering the conversation
-
-**Always use `hide-older-comments: true`** for workflows that may comment multiple times on the same item (e.g., CI doctor commenting on each push).
-
----
+## Rules
 
-## Pattern 4: create-pull-request
-
-**When:** The agent made code changes that need review.
-
-### Production Example — Daily Improvement PR
-
-```yaml
-outputs:
-  - type: create-pull-request
-    config:
-      draft: true              # Always start as draft
-      if-no-changes: ignore    # Don't create empty PRs
-      labels: ["automated"]
-      title-prefix: "[auto] "
-```
-
-### Production Example — Doc Sync PR
-
-```yaml
-outputs:
-  - type: create-pull-request
-    config:
-      draft: true
-      if-no-changes: ignore
-      base: main
-      labels: ["docs", "automated"]
-```
-
-**Critical settings:**
-- **`draft: true`** — Always. Automated PRs should never auto-merge without review.
-- **`if-no-changes: ignore`** — Prevents empty PRs when the agent finds nothing to change.
-
----
-
-## Pattern 5: create-pull-request-review-comment
-
-**When:** The agent should leave inline review comments on specific code lines.
-
-### Production Example — Nitpick Reviewer
-
-```yaml
-outputs:
-  - type: create-pull-request-review-comment
-    config:
-      max: 5                   # Don't overwhelm — 5-10 comments max
-```
-
-### Production Example — Performance Review
-
-```yaml
-outputs:
-  - type: create-pull-request-review-comment
-    config:
-      max: 10
-```
-
-**Guidelines:**
-- **Set `max: 5` to `max: 10`** — More than 10 inline comments is overwhelming
-- Fewer, higher-quality comments beat many trivial ones
-- The agent should prioritize comments by severity
-
----
-
-## Pattern 6: add-labels
-
-**When:** The agent's primary job is to classify/categorize.
-
-### Production Example — Issue Triage Labels
-
-```yaml
-outputs:
-  - type: add-labels
-    config:
-      allowed:
-        - bug
-        - feature-request
-        - question
-        - documentation
-        - good-first-issue
-        - needs-repro
-```
-
-**Critical: Always use `allowed` list.** Without it, the agent may invent labels that don't exist in your repo, creating label pollution.
-
-### Production Example — Priority Labels
-
-```yaml
-outputs:
-  - type: add-labels
-    config:
-      allowed:
-        - priority:critical
-        - priority:high
-        - priority:medium
-        - priority:low
-```
-
----
-
-## Pattern 7: dispatch-workflow
-
-**When:** Chaining workflows together — the output of one triggers the next.
-
-### Production Example — Content Pipeline
-
-```yaml
-# Workflow 1: Blog Drafter
-outputs:
-  - type: dispatch-workflow
-    config:
-      workflow: blog-linker.yml
-      inputs:
-        draft_id: "${{ steps.draft.outputs.id }}"
-        title: "${{ steps.draft.outputs.title }}"
-```
-
-```yaml
-# Workflow 2: Blog Linker (triggered by dispatch)
-on:
-  workflow_dispatch:
-    inputs:
-      draft_id:
-        required: true
-      title:
-        required: true
-
-steps:
-  - agent:
-      prompt: |
-        Add internal links and SEO metadata to draft ${{ inputs.draft_id }}.
-```
-
-**Use case:** Build multi-stage pipelines where each stage is a separate workflow.
-
----
-
-## Pattern 8: upload-asset
-
-**When:** The agent generates charts, images, or binary artifacts.
-
-### Production Example — SLO Chart
-
-```yaml
-steps:
-  - run: python generate_chart.py --output /tmp/slo-chart.png
-
-outputs:
-  - type: upload-asset
-    config:
-      path: /tmp/slo-chart.png
-```
-
-**Tip:** Generate charts in a pre-step, then upload as an asset. The agent can reference the asset URL in discussions or comments.
-
----
-
-## Pattern 9: noop (Job Summary Only)
-
-**When:** You just want to log results without creating any GitHub artifacts.
-
-### Production Example — Dry Run / Debug
-
-```yaml
-outputs: []
-# Results appear only in the Job Summary (Actions tab)
-```
-
-**When to use:**
-- Testing a new workflow before enabling outputs
-- Workflows where the value is in the agent's analysis, not an artifact
-- Internal debugging workflows
-
----
-
-## Combining Outputs
-
-Many production workflows use **multiple outputs**:
-
-### Example: Triage + Label + Comment
-
-```yaml
-outputs:
-  - type: add-labels
-    config:
-      allowed: [bug, feature, question, duplicate]
-
-  - type: add-comment
-    config:
-      target: triggering
-      hide-older-comments: true
-```
-
-### Example: Report + Artifact
-
-```yaml
-outputs:
-  - type: create-discussion
-    config:
-      category: "Reports"
-      title-prefix: "Weekly SLO"
-      close-older: true
-      expires: "14d"
-
-  - type: upload-asset
-    config:
-      path: /tmp/slo-chart.png
-```
-
----
-
-## Quick Reference
-
-```
-Recurring report?                    → create-discussion (close-older: true)
-Actionable finding?                  → create-issue (max + expires)
-Responding to a trigger?             → add-comment (target: triggering)
-Made code changes?                   → create-pull-request (draft: true)
-Inline code feedback?                → create-pull-request-review-comment (max: 5-10)
-Classifying/labeling?                → add-labels (allowed: [...])
-Chaining to next workflow?           → dispatch-workflow
-Generated an image/chart?            → upload-asset
-Just logging/debugging?              → noop (Job Summary)
-```
-
----
-
-## Common Gotchas
-
-1. **Issues ≠ Reports.** Don't use `create-issue` for recurring reports — they'll clutter your backlog. Use `create-discussion`.
-2. **Always set `max` on create-issue.** Without it, a confused agent can create 50 issues in one run.
-3. **Always set `expires`.** Stale automated content should self-clean.
-4. **Always use `draft: true` for PRs.** Never let automated code auto-merge.
-5. **Always use `allowed` for labels.** Agents will invent creative labels if you let them.
-6. **Always use `hide-older-comments: true`** for workflows that comment repeatedly.
+1. **Issue triage → `add-comment` + `add-labels`.** This is the standard pattern across 41 triage workflows.
+2. **Code changes → `create-pull-request`.** Never push directly; always go through PR review.
+3. **Daily reports → `create-issue` or `create-discussion`.** Issues are more visible; discussions allow threads.
+4. **Use `safe_outputs` to restrict high-risk workflows.** Especially workflows that run on untrusted input (issues from public).
+5. **Chain workflows with `dispatch-workflow`** when one agent's output feeds another.
+6. **Start with minimal outputs** — you can always add more later. It's harder to restrict after the fact.

@@ -1,444 +1,104 @@
-# Safety Configuration — How do I lock this down?
-
-## Why Safety Configuration Matters
-
-Agentic workflows run autonomously. Without guardrails:
-- A triage bot creates 200 issues in one run
-- A reviewer leaves 50 inline comments on a PR
-- A report workflow creates discussions that pile up forever
-- An agent with network access hits external APIs you didn't intend
-
-**Every production workflow should have explicit safety limits.**
-
----
-
-## Quick Reference Table
-
-| Setting | What It Controls | Common Values |
-|---|---|---|
-| `max` | Maximum outputs per run | 1 (reports), 3-5 (triage), 10 (reviews), 100 (campaigns) |
-| `expires` | Auto-cleanup of created artifacts | 1d, 7d, 14d, 30d |
-| `close-older` | Auto-close previous instances | true/false |
-| `target` | Where comments go | `triggering`, issue number, PR number |
-| `allowed` | Whitelist of allowed values | Label lists, categories |
-| `network.allowed` | Allowed network destinations | Domain allowlist |
-| `stop-after` | Auto-disable the workflow | +7d, +30d, +1mo, +90d |
-| `rate-limit` | Max runs per time window | 5/hour, 20/day |
-| `roles` | Who can trigger | maintainer, collaborator, member |
-| `permissions` | Repository permissions | read, write, admin |
-| `hide-older-comments` | Collapse previous bot comments | true/false |
-| `draft` | PR starts as draft | true/false |
-| `if-no-changes` | What to do when no changes | ignore, fail |
-| `lock-for-agent` | Prevent concurrent agent edits | true/false |
-| `strict` | Enforce all safety rules strictly | true/false |
-
----
-
-## Max Limits
-
-Control how many artifacts the agent creates per run.
-
-### Guidelines by Workflow Type
-
-| Workflow Type | Recommended Max | Why |
-|---|---|---|
-| Recurring reports | `max: 1` | One report per run |
-| Issue triage (per trigger) | `max: 1` | One response per issue |
-| Batch triage (daily) | `max: 3-5` | Limit daily noise |
-| Code review comments | `max: 5-10` | Avoid overwhelming PRs |
-| Improvement PRs | `max: 1-3` | Each PR needs human review |
-| Campaign/migration | `max: 50-100` | High volume, bounded |
-
-### Examples
-
-```yaml
-# Report — exactly one discussion per run
-outputs:
-  - type: create-discussion
-    config:
-      max: 1
-
-# Triage — up to 3 issues per daily run
-outputs:
-  - type: create-issue
-    config:
-      max: 3
-
-# Code review — up to 5 inline comments
-outputs:
-  - type: create-pull-request-review-comment
-    config:
-      max: 5
-
-# Migration campaign — up to 100 PRs total
-outputs:
-  - type: create-pull-request
-    config:
-      max: 100
-```
-
-**Without `max`, a confused agent can create unlimited artifacts.** Always set it.
-
----
-
-## Expiration (expires)
-
-Auto-cleanup artifacts after a time period.
-
-### Guidelines
-
-| Artifact Type | Recommended Expires | Why |
-|---|---|---|
-| Daily reports | `1d` or `7d` | Yesterday's report is stale |
-| Weekly reports | `14d` | Keep 2 weeks of history |
-| Triage issues | `30d` | If not acted on in 30 days, auto-close |
-| Campaign PRs | `14d` | If not merged in 2 weeks, probably stale |
-| Alert discussions | `7d` | Alerts lose relevance quickly |
-
-### Examples
-
-```yaml
-# Daily report — expires in 7 days
-outputs:
-  - type: create-discussion
-    config:
-      expires: "7d"
-      close-older: true
-
-# Triage issue — expires in 30 days
-outputs:
-  - type: create-issue
-    config:
-      expires: "30d"
-      labels: ["automated"]
-
-# Alert — expires in 1 day
-outputs:
-  - type: create-discussion
-    config:
-      expires: "1d"
-```
+# Safety Configuration
 
----
-
-## close-older
+> **"How do I lock it down?"**
 
-Auto-close previous instances of recurring outputs.
+## The Numbers
 
-```yaml
-outputs:
-  - type: create-discussion
-    config:
-      title-prefix: "Weekly Report"
-      close-older: true     # Closes last week's report when this week's is created
-```
-
-**Always use `close-older: true` for recurring reports.** Without it, you'll accumulate dozens of open discussions.
+From **679 workflows** across **269 repos**:
 
----
+| Safety Feature | Count | Share |
+|----------------|-------|-------|
+| `stop_after` (time limit) | 61 | 9% |
+| `safe_outputs` (output restriction) | 3 | 0.4% |
 
-## Target and hide-older-comments
+### `stop_after` Distribution
 
-Control where comments go and how they behave.
+| Duration | Count |
+|----------|-------|
+| `+1mo` | 24 |
+| `+30d` | 18 |
+| `+48h` | 16 |
+| `+6mo` | 2 |
+| `+10d` | 1 |
 
-```yaml
-outputs:
-  - type: add-comment
-    config:
-      target: triggering          # Comment on the item that triggered the workflow
-      hide-older-comments: true   # Collapse previous comments from this workflow
-```
+91% of workflows use no explicit time limit or output restriction. Safety configuration is an opt-in layer for specific risk scenarios.
 
-### target Options
+## Decision Table
 
-| Value | Where Comment Goes |
-|---|---|
-| `triggering` | The issue/PR that triggered the workflow |
-| `{issue_number}` | A specific issue |
-| `{pr_number}` | A specific PR |
+| Risk | Mitigation | Why |
+|------|------------|-----|
+| Agent runs too long | `stop_after` | Prevent runaway compute costs |
+| Agent writes to wrong places | `safe_outputs` | Restrict output types |
+| Agent accesses external APIs | `network.allowed` | Whitelist domains |
+| Agent does too much too fast | Rate limiting | Prevent flooding |
+| Untrusted input (public issues) | Output restriction + review | Don't auto-merge |
 
-**Always use `hide-older-comments: true`** for workflows that may comment multiple times. Without it, the conversation gets buried under bot comments.
+## Safety Feature 1: `stop_after` (61 workflows)
 
----
+Sets a maximum lifetime for the workflow. After this duration, the workflow is terminated regardless of state.
 
-## Allowed Labels Whitelist
+### `+48h` — Short Tasks (16 workflows)
 
-Prevent the agent from inventing labels.
+Used for workflows that should complete quickly. If they're still running after 48 hours, something is wrong.
 
-```yaml
-outputs:
-  - type: add-labels
-    config:
-      allowed:
-        - bug
-        - feature-request
-        - question
-        - documentation
-        - good-first-issue
-        - needs-repro
-        - priority:critical
-        - priority:high
-        - priority:medium
-        - priority:low
-```
+**Real examples:**
+- [`kaito-project/aikit/daily-test-improver`](https://github.com/kaito-project/aikit/blob/main/.github/workflows/daily-test-improver.md) — Test improvements should finish quickly (509 ⭐)
+- [`AdaCore/z3/daily-perf-improver`](https://github.com/AdaCore/z3/blob/main/.github/workflows/daily-perf-improver.md) — Performance work with tight deadline (1 ⭐)
+- [`AdaCore/z3/ask`](https://github.com/AdaCore/z3/blob/main/.github/workflows/ask.md) — Q&A should respond promptly (1 ⭐)
 
-**Without `allowed`, agents will create labels like "possibly-related-to-authentication" or "interesting-edge-case".** Always whitelist.
+### `+30d` / `+1mo` — Long-Running Tasks (42 workflows)
 
----
+Used for workflows that may need extended time — waiting for human review, multi-step processes.
 
-## Network Restrictions
+**Real examples:**
+- [`appwrite/appwrite/issue-triage`](https://github.com/appwrite/appwrite/blob/main/.github/workflows/issue-triage.md) — 30-day timeout for triage (54,898 ⭐)
+- [`JanDeDobbeleer/oh-my-posh/workflow-doctor`](https://github.com/JanDeDobbeleer/oh-my-posh/blob/main/.github/workflows/workflow-doctor.md) — 1-month timeout for CI diagnosis (21,566 ⭐)
+- [`kaito-project/aikit/issue-triage`](https://github.com/kaito-project/aikit/blob/main/.github/workflows/issue-triage.md) — 30-day triage window (509 ⭐)
+- [`opencollective/opencollective/issue-triage-agent`](https://github.com/opencollective/opencollective/blob/main/.github/workflows/issue-triage-agent.md) — Monthly triage window (2,248 ⭐)
 
-Control what external services the agent can access.
+### `+6mo` — Extended Projects (2 workflows)
 
-```yaml
-safety:
-  network:
-    allowed:
-      - "api.github.com"
-      - "registry.npmjs.org"
-      - "pypi.org"
-```
+Rare. Used for long-term tracking workflows.
 
-### Common Allowlists by Workflow Type
+## Safety Feature 2: `safe_outputs` (3 workflows)
 
-| Workflow Type | Allowed Domains |
-|---|---|
-| GitHub-only | `api.github.com` |
-| Node.js project | `api.github.com`, `registry.npmjs.org` |
-| Python project | `api.github.com`, `pypi.org` |
-| Cloud monitoring | `api.github.com`, `management.azure.com`, `api.datadoghq.com` |
-| Fully restricted | `[]` (empty — no network access) |
+Explicitly restricts which output types the workflow is allowed to produce. Acts as a whitelist.
 
-**Default to restrictive.** Only add domains the agent actually needs.
+**Real examples:**
+- [`github/gh-aw/lockfile-stats`](https://github.com/github/gh-aw/blob/main/.github/workflows/lockfile-stats.md) — `[create-pull-request, create-discussion, add-comment, create-issue]` (3,356 ⭐)
+- [`JoshGreenslade/AITraining/workflow-architect`](https://github.com/JoshGreenslade/AITraining/blob/main/.github/workflows/workflow-architect.md) — `[add-comment, add-labels]` — can only comment and label, not create PRs
+- [`nikhilmlal/test_repo/issue-triage.agent`](https://github.com/nikhilmlal/test_repo/blob/main/.github/workflows/issue-triage.agent.md) — `[add-comment]` — comment-only, most restrictive
 
----
+**Use `safe_outputs` when:**
+- The workflow runs on untrusted input (public issues, PRs from forks)
+- You want to prevent the agent from creating PRs, issues, or discussions
+- The workflow should only observe and comment, not modify
 
-## stop-after
+## Safety Feature 3: Network Restrictions
 
-Auto-disable the workflow after a time period. Your safety net against forgotten workflows.
+Use `network.allowed` to whitelist which external domains the agent can access. Not widely tracked in the scan, but important for:
+- Workflows that call external APIs
+- Preventing data exfiltration
+- Ensuring the agent only talks to approved services
 
-```yaml
-safety:
-  stop-after: "+30d"    # Disable after 30 days
-```
+## Safety Feature 4: Engine Selection
 
-### Recommended Values
+From the scan, **170 workflows** explicitly use `engine: copilot`, **46 use `claude`**, and **14 use `codex`**. Engine selection affects safety boundaries — each engine has different default permissions and capabilities.
 
-| Workflow Lifespan | stop-after |
-|---|---|
-| Testing / experimental | `+7d` |
-| Campaign (e.g., migrate all repos) | `+30d` or `+1mo` |
-| Quarterly review | `+90d` |
-| Permanent (core triage) | Don't set, or `+1y` for safety |
+## Workflows with Multiple Safety Features
 
-**Always set `stop-after` for scheduled workflows.** A weekly report that runs for 3 years after everyone forgot about it wastes resources and creates noise.
+Some workflows combine safety measures:
 
----
+- [`JanDeDobbeleer/oh-my-posh/workflow-doctor`](https://github.com/JanDeDobbeleer/oh-my-posh/blob/main/.github/workflows/workflow-doctor.md) — `stop_after: +1mo` + explicit model selection + `workflow_run` trigger (only runs after CI) (21,566 ⭐)
+- [`kaito-project/aikit/daily-test-improver`](https://github.com/kaito-project/aikit/blob/main/.github/workflows/daily-test-improver.md) — `stop_after: +48h` + pre-steps (controlled input) (509 ⭐)
 
-## Rate Limiting
+## Rules
 
-Prevent runaway execution.
-
-```yaml
-safety:
-  rate-limit:
-    max-runs: 5
-    per: hour
-```
-
-### Common Configurations
-
-| Trigger Type | Rate Limit |
-|---|---|
-| `issues:[opened]` (high-traffic repo) | `20/hour` |
-| `schedule:daily` | Not needed (already limited by cron) |
-| `slash_command` | `10/hour` per user |
-| `pull_request` | `10/hour` |
-
----
-
-## Roles and Permissions
-
-Control who can trigger and what the agent can do.
-
-### Roles (Who Can Trigger)
-
-```yaml
-safety:
-  roles:
-    - maintainer
-    - collaborator
-```
-
-| Role | Who |
-|---|---|
-| `maintainer` | Repo maintainers only |
-| `collaborator` | Anyone with write access |
-| `member` | Organization members |
-| `contributor` | Anyone who has contributed |
-
-**For slash commands, always restrict roles.** Otherwise, anyone who can comment can trigger your workflow.
-
-### Permissions (What the Agent Can Do)
-
-```yaml
-safety:
-  permissions:
-    contents: read          # Can read code, not write
-    issues: write           # Can create/modify issues
-    pull-requests: write    # Can create/modify PRs
-    discussions: write      # Can create discussions
-```
-
-**Principle of least privilege.** Only grant the permissions the workflow actually needs.
-
----
-
-## lock-for-agent
-
-Prevent concurrent agent runs from conflicting.
-
-```yaml
-safety:
-  lock-for-agent: true
-```
-
-**When to use:**
-- Workflows that modify the same files
-- Workflows that create PRs (avoid duplicate PRs)
-- Batch processing workflows (avoid processing the same item twice)
-
----
-
-## strict Mode
-
-Enforce all safety rules without exceptions.
-
-```yaml
-safety:
-  strict: true
-```
-
-When `strict: true`:
-- Agent cannot exceed `max` limits even if instructed to
-- Agent cannot access non-allowed network destinations
-- Agent cannot create non-allowed labels
-- All safety violations cause the run to fail immediately
-
----
-
-## Production Safety Profiles
-
-### Minimal (Testing)
-
-```yaml
-safety:
-  stop-after: "+7d"
-
-outputs:
-  - type: add-comment
-    config:
-      target: triggering
-      max: 1
-```
-
-### Standard (Triage)
-
-```yaml
-safety:
-  stop-after: "+90d"
-  roles: [maintainer, collaborator]
-  rate-limit:
-    max-runs: 20
-    per: day
-
-outputs:
-  - type: add-labels
-    config:
-      allowed: [bug, feature, question, docs, needs-repro]
-  - type: add-comment
-    config:
-      target: triggering
-      hide-older-comments: true
-      max: 1
-```
-
-### Locked Down (Enterprise)
-
-```yaml
-safety:
-  strict: true
-  stop-after: "+1y"
-  lock-for-agent: true
-  roles: [maintainer]
-  rate-limit:
-    max-runs: 5
-    per: hour
-  network:
-    allowed:
-      - "api.github.com"
-  permissions:
-    contents: read
-    issues: write
-    pull-requests: read
-
-outputs:
-  - type: create-discussion
-    config:
-      max: 1
-      expires: "14d"
-      close-older: true
-  - type: add-labels
-    config:
-      allowed: [reviewed, needs-attention, compliant, non-compliant]
-```
-
----
-
-## The Missing `safe-outputs` Problem
-
-> **Finding: 6 out of 79 production workflows have NO `safe-outputs:` defined at all** — the agent literally can't write results anywhere.
-
-A workflow without safe outputs will run, consume model tokens, and then silently discard its work because it has no authorized output channel. This is one of the most common configuration mistakes.
-
-> **Rule: Every workflow needs at least `create-issue` or `noop` as a safe output.**
-
-```yaml
-# ❌ Bad — no outputs defined, agent's work is lost
-steps:
-  - agent:
-      prompt: Analyze the repository for security issues.
-
-# ✅ Good — minimum viable output
-steps:
-  - agent:
-      prompt: Analyze the repository for security issues.
-
-outputs:
-  - type: create-issue
-    config:
-      max: 1
-      labels: ["automated"]
-```
-
-If the workflow is purely diagnostic (no side effects desired), use `noop` to explicitly acknowledge that no output is expected:
-
-```yaml
-outputs:
-  - type: noop    # Workflow is intentionally output-free (e.g., dry-run testing)
-```
-
-*Source: Analysis of 79 production workflows*
-
----
-
-## Common Gotchas
-
-1. **Set `max` on every output.** Without it, there's no upper bound on what the agent creates.
-2. **Set `stop-after` on every scheduled workflow.** Forgotten workflows are silent resource drains.
-3. **Set `allowed` on every label output.** Agents are creative label inventors.
-4. **Set `roles` on every slash command.** Otherwise any commenter can trigger your workflow.
-5. **Set `hide-older-comments: true`** to prevent comment spam on long-lived issues.
-6. **Default to `draft: true`** for all PR outputs — never auto-merge.
-7. **Start restrictive, loosen as needed.** It's easier to add permissions than to clean up after a misconfigured workflow.
-8. **Define at least one safe output.** Without it, the agent's work is silently discarded (see above).
+1. **Always set `stop_after`** on scheduled workflows. Without it, a stuck workflow runs indefinitely.
+2. **Use `+48h` for daily jobs** that should complete within a day.
+3. **Use `+30d` for triage workflows** that may need human interaction over weeks.
+4. **Use `safe_outputs` on public-facing workflows** — restrict what untrusted input can trigger.
+5. **Restrict to `[add-comment]` for read-only workflows** — the most conservative setting.
+6. **Combine safety features** — `stop_after` + `safe_outputs` + network restrictions for maximum lockdown.
+7. **Start permissive, tighten as needed** — or start restrictive and open up. Both approaches work; pick one and be consistent.
+8. **The 91% without safety config aren't necessarily unsafe** — platform defaults provide baseline protections. Explicit config is for workflows with higher risk profiles.

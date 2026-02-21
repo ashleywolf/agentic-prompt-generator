@@ -1,183 +1,70 @@
 ---
-# Shared Formatting Template
-# Import this in any agent workflow for consistent output formatting.
-# Usage: imports: [shared/formatting.md]
-
-name: Shared Formatting Standards
-description: GFM compliance, code blocks, links, and reference formatting for all agents
+name: shared/formatting
+description: Shared markdown formatting utilities for agentic workflows
 ---
 
-## Output Formatting Standards
+# Markdown Formatting Guide
 
-All agent-generated content MUST follow these formatting rules for GitHub-Flavored Markdown (GFM) compliance.
+Import this file for consistent markdown formatting across workflows.
 
-### GFM Compliance
+## Collapsible Details
 
-GitHub-Flavored Markdown has specific rendering rules. Follow these to ensure your output displays correctly:
+Use for long content that should be hidden by default:
 
-1. **Blank lines**: Always put a blank line before and after:
-   - Headers (`## Title`)
-   - Code blocks (`` ``` ``)
-   - Tables
-   - Lists
-   - Block quotes (`>`)
-   - `<details>` blocks
+```markdown
+<details>
+<summary>[Click to expand title]</summary>
 
-2. **Line breaks**: Use two trailing spaces or `<br>` for line breaks within paragraphs. A single newline is treated as a space.
+[content here]
 
-3. **Nested lists**: Indent with exactly 2 spaces for unordered lists, 3 spaces for ordered lists.
+</details>
+```
 
-4. **HTML in Markdown**: Supported HTML tags: `<details>`, `<summary>`, `<sub>`, `<sup>`, `<br>`, `<kbd>`, `<picture>`. Other HTML tags may be stripped.
-
-### Code Block Rules
+## Code Blocks
 
 Always specify the language for syntax highlighting:
 
-```markdown
-✅ Good:
-\`\`\`javascript
-const x = 1;
-\`\`\`
-
-❌ Bad:
-\`\`\`
-const x = 1;
-\`\`\`
+````markdown
+```json
+{ "key": "value" }
 ```
+````
 
-Supported language identifiers (use these exact strings):
-- JavaScript: `javascript` or `js`
-- TypeScript: `typescript` or `ts`
-- Python: `python` or `py`
-- Shell/Bash: `bash` or `sh`
-- JSON: `json`
-- YAML: `yaml` or `yml`
-- Markdown: `markdown` or `md`
-- Diff: `diff`
-- SQL: `sql`
-- Go: `go`
-- Rust: `rust`
-- HTML: `html`
-- CSS: `css`
+## Tables
 
-For command output with no syntax highlighting, use `text` or `console`.
-
-For diffs, use the `diff` language:
-```diff
-- old line
-+ new line
-```
-
-### Inline Code
-
-Use backticks for:
-- File names: `` `package.json` ``
-- Function names: `` `handleSubmit()` ``
-- Variable names: `` `userId` ``
-- CLI commands: `` `npm install` ``
-- Error codes: `` `ENOENT` ``
-- Short code snippets: `` `if (x > 0)` ``
-
-Do NOT use backticks for:
-- Emphasis (use **bold** or *italic*)
-- General text styling
-- Names of concepts ("dependency injection", not `` `dependency injection` ``)
-
-### Link Formatting
-
-#### GitHub Issue/PR References
-
-Use shorthand references — GitHub auto-links them:
-- Same repo: `#123` (not `[#123](url)`)
-- Cross-repo: `owner/repo#123`
-- Commit: `` `abc1234` `` (first 7 chars, in backticks)
-
-#### External Links
-
-Use descriptive text, never bare URLs or "click here":
+Use aligned columns for readability:
 
 ```markdown
-✅ Good:
-See the [migration guide](https://example.com/docs/migration) for details.
-
-❌ Bad:
-See https://example.com/docs/migration for details.
-See [click here](https://example.com/docs/migration) for details.
+| Column 1 | Column 2 | Column 3 |
+|----------|----------|----------|
+| value    | value    | value    |
 ```
 
-#### User Mentions
+## Links and References
 
-- Use `@username` to mention GitHub users
-- Be deliberate with mentions — each one sends a notification
-- In automated reports, consider using `@username` only in action items, not in general statistics
+- Issues: `#123` or `owner/repo#123`
+- PRs: `#456` or `owner/repo#456`
+- Commits: `` `abc1234` `` or `owner/repo@abc1234`
+- Users: `@username`
 
-### Issue/PR Reference Format
+## Admonitions
 
-When referencing issues or PRs in reports or comments, use this consistent format:
-
-```markdown
-**In-line**: Fixed in #123 by @author
-**In tables**: `#123` in the ID column
-**With title**: #123 (Add user authentication)
-**Cross-repo**: owner/repo#456
-```
-
-### Quoting
-
-Use block quotes for:
-- Direct quotes from error messages
-- Excerpts from documentation
-- User-provided context
-
-```markdown
-> Error: ECONNREFUSED 127.0.0.1:5432
-> at TCPConnectWrap.afterConnect [as oncomplete]
-```
-
-Do NOT use block quotes for:
-- Your own commentary or notes
-- Section introductions
-- Warnings (use ⚠️ emoji or `> [!WARNING]` GitHub alert syntax instead)
-
-### GitHub Alert Syntax
-
-Use GitHub's alert syntax for important callouts:
+Use blockquotes with emoji for callouts:
 
 ```markdown
 > [!NOTE]
-> Informational note that users should be aware of.
-
-> [!TIP]
-> Helpful advice for the reader.
-
-> [!IMPORTANT]
-> Key information users need to know.
+> Informational callout
 
 > [!WARNING]
-> Potentially dangerous or destructive action.
+> Warning callout
 
-> [!CAUTION]
-> Risks or negative outcomes to be aware of.
+> [!IMPORTANT]
+> Important callout
 ```
 
-### Table Best Practices
+## Truncation
 
-- Keep tables to ≤ 6 columns for readability
-- Use consistent alignment within columns
-- Truncate long strings with `…` (max 50 chars per cell)
-- For tables with > 15 rows, wrap in `<details>`
-- Right-align numeric columns where possible
-
-```markdown
-| Name | Count | Change |
-|:-----|------:|:------:|
-| Items | 42 | ↑ +10% |
-```
-
-### Special Characters
-
-Escape these characters when they appear in content (not as formatting):
-- `|` in tables: use `\|`
-- `#` at line start: use `\#`
-- `-` at line start: use `\-`
-- Backticks in code: use double backticks ``` `` ` `` ```
+When content exceeds reasonable length:
+1. Show the first 10 items in full
+2. Summarize remaining items in a collapsible section
+3. Always include a total count

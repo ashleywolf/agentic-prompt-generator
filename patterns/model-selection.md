@@ -1,266 +1,87 @@
-# Model Selection — Which model should I use?
+# Model Selection
 
-## Rule of Thumb
+> **"Which model should I use?"**
 
-| Task Type | Model | Why |
-|---|---|---|
-| Classification / Detection | `gpt-5.1-codex-mini` | Fast, cheap, accurate for yes/no and labeling |
-| Planning / Decomposition | `claude-opus-4.6` | Best at multi-step reasoning and architecture |
-| Investigation / Debugging | `claude-sonnet-4.5` | Strong code analysis, good balance of depth and speed |
-| Everything else | Default (Copilot) | Good enough for 90% of workflows |
+## The Numbers
 
-**Start with the default.** Only override when you have a specific reason.
+From **679 workflows** across **269 repos**:
 
----
+| Model | Workflows | Usage |
+|-------|-----------|-------|
+| Default (no explicit model) | 631 | 93% |
+| `gpt-5.1-codex-mini` | 17 | 2.5% |
+| `claude-opus-4.6` / `claude-opus-4-6` | 11 | 1.6% |
+| `claude-haiku-4.5` | 3 | 0.4% |
+| `gpt-5.2` | 2 | 0.3% |
+| `gpt-5` | 2 | 0.3% |
+| `claude-sonnet-4` / `4.5` / `4.6` | 4 | 0.6% |
+| Other (`gemini`, `gpt-4o`, `gpt-4.1`) | 4 | 0.6% |
 
-## Decision Flowchart
+**93% of workflows use the platform default.** Explicit model selection is the exception, not the rule.
 
-```
-What does the agent do?
+## Decision Table
 
-├── Classify, label, or detect patterns?
-│   └── gpt-5.1-codex-mini (fast + cheap)
-│
-├── Break down features, plan milestones, decompose work?
-│   └── claude-opus-4.6 (strongest reasoning)
-│
-├── Debug failures, investigate code, root-cause analysis?
-│   └── claude-sonnet-4.5 (deep code understanding)
-│
-└── Everything else (triage, reports, reviews, comments)
-    └── Default — don't specify a model
-```
+| Task Type | Recommended Model | Why | Real Example |
+|-----------|-------------------|-----|--------------|
+| Classification / triage | `gpt-5.1-codex-mini` | Fast, cheap, good enough for labels | [`github/gh-aw/issue-monster`](https://github.com/github/gh-aw/blob/main/.github/workflows/issue-monster.md) |
+| Scheduled batch work | `gpt-5.1-codex-mini` | High volume, cost matters | [`github/gh-aw/daily-fact`](https://github.com/github/gh-aw/blob/main/.github/workflows/daily-fact.md) |
+| Code review / investigation | Default or `claude-sonnet` | Balanced reasoning + speed | [`JanDeDobbeleer/oh-my-posh/workflow-doctor`](https://github.com/JanDeDobbeleer/oh-my-posh/blob/main/.github/workflows/workflow-doctor.md) |
+| PR analysis | `claude-sonnet-4.5` | Strong code understanding | [`HemSoft/hs-buddy/pr-analyzer-a`](https://github.com/HemSoft/hs-buddy/blob/main/.github/workflows/pr-analyzer-a.md) |
+| Complex planning / architecture | `claude-opus-4.6` | Deep reasoning needed | [`phpstan/phpstan/generate-error-docs`](https://github.com/phpstan/phpstan/blob/main/.github/workflows/generate-error-docs.md) |
+| Cross-repo sync / deep analysis | `claude-opus-4.6` | Multi-step, high stakes | [`npgsql/efcore.pg/sync-to-latest-ef`](https://github.com/npgsql/efcore.pg/blob/main/.github/workflows/sync-to-latest-ef.md) |
+| Doc generation | `claude-haiku-4.5` | Good prose, low cost | [`Olino3/forge/forge-doc-maintainer`](https://github.com/Olino3/forge/blob/main/.github/workflows/forge-doc-maintainer.md) |
+| Everything else | Default | Let the platform optimize | 93% of all workflows |
 
----
+## Real Examples by Model
 
-## Pattern 1: Default (90% of workflows)
+### `gpt-5.1-codex-mini` — The Workhorse (17 workflows)
 
-**When:** General-purpose triage, commenting, reviewing, reporting.
+Used for high-volume, classification, and batch tasks where cost matters:
 
-Don't specify a model at all — the platform picks the best default.
+- [`github/gh-aw/issue-monster`](https://github.com/github/gh-aw/blob/main/.github/workflows/issue-monster.md) — Issue labeling at scale (3,356 ⭐)
+- [`github/gh-aw/chroma-issue-indexer`](https://github.com/github/gh-aw/blob/main/.github/workflows/chroma-issue-indexer.md) — Index issues for search (3,356 ⭐)
+- [`drehelis/gcp-emulator-ui/check-emulator-updates`](https://github.com/drehelis/gcp-emulator-ui/blob/main/.github/workflows/check-emulator-updates.md) — Check upstream changes (35 ⭐)
+- [`Olino3/forge/forge-dependency-update-sentinel`](https://github.com/Olino3/forge/blob/main/.github/workflows/forge-dependency-update-sentinel.md) — Dependency scanning
+- [`Olino3/forge/forge-stale-gardener`](https://github.com/Olino3/forge/blob/main/.github/workflows/forge-stale-gardener.md) — Stale issue cleanup
 
-```yaml
-steps:
-  - agent:
-      prompt: |
-        Review this pull request and suggest improvements.
-```
+### `claude-opus-4.6` — The Thinker (11 workflows)
 
-**Production examples:** Most workflows in the wild — issue triage, PR review, daily reports, slash commands.
+Used when deep reasoning, multi-step planning, or high-stakes decisions are needed:
 
-**Why default is usually right:**
-- The default model improves over time without you changing anything
-- Specifying a model locks you to that version
-- Default is optimized for the Copilot agent runtime
+- [`phpstan/phpstan/generate-error-docs`](https://github.com/phpstan/phpstan/blob/main/.github/workflows/generate-error-docs.md) — Generate comprehensive error documentation (13,829 ⭐)
+- [`npgsql/efcore.pg/sync-to-latest-ef`](https://github.com/npgsql/efcore.pg/blob/main/.github/workflows/sync-to-latest-ef.md) — Sync codebase to upstream EF Core changes (1,801 ⭐)
+- [`elastic/opentelemetry-collector-components/pr-review`](https://github.com/elastic/opentelemetry-collector-components/blob/main/.github/workflows/pr-review.md) — Deep PR review (16 ⭐)
+- [`Olino3/forge/forge-feature-decomposer`](https://github.com/Olino3/forge/blob/main/.github/workflows/forge-feature-decomposer.md) — Break features into tasks
+- [`Olino3/forge/forge-project-manager-agent`](https://github.com/Olino3/forge/blob/main/.github/workflows/forge-project-manager-agent.md) — Project planning
 
----
+### `claude-sonnet-4.5` — The Investigator (4 workflows)
 
-## Pattern 2: gpt-5.1-codex-mini — Classification & Detection
+Balanced reasoning for code analysis:
 
-**When:** The agent's job is primarily to classify, label, detect, or make binary decisions.
+- [`JanDeDobbeleer/oh-my-posh/workflow-doctor`](https://github.com/JanDeDobbeleer/oh-my-posh/blob/main/.github/workflows/workflow-doctor.md) — Diagnoses CI failures after `workflow_run` (21,566 ⭐)
 
-**Key traits:**
-- ⚡ Fastest response time
-- 💰 Lowest cost per token
-- 🎯 Excellent at structured output (JSON, labels, scores)
-- ❌ Weaker at long-form reasoning or multi-step plans
+### `claude-haiku-4.5` — The Documenter (3 workflows)
 
-### Production Examples
+Fast, good prose output, low cost:
 
-**ai-moderator** — spam and content moderation:
-```yaml
-steps:
-  - agent:
-      model: gpt-5.1-codex-mini
-      prompt: |
-        Classify this issue as one of: [spam, off-topic, valid-bug, feature-request].
-        Respond with only the classification label.
-```
+- [`Olino3/forge/forge-release-notes-generator`](https://github.com/Olino3/forge/blob/main/.github/workflows/forge-release-notes-generator.md) — Generate release notes
+- [`Olino3/forge/forge-doc-maintainer`](https://github.com/Olino3/forge/blob/main/.github/workflows/forge-doc-maintainer.md) — Keep docs updated
+- [`Olino3/forge/forge-health-dashboard`](https://github.com/Olino3/forge/blob/main/.github/workflows/forge-health-dashboard.md) — Health summary reports
 
-**forge-duplication-detector** — [Olino3/forge](https://github.com/Olino3/forge):
-```yaml
-steps:
-  - agent:
-      model: gpt-5.1-codex-mini
-      prompt: |
-        Compare the new issue against existing issues.
-        Determine if this is a duplicate. Output JSON:
-        { "is_duplicate": true/false, "similar_issue": "#number or null", "confidence": 0.0-1.0 }
-```
+### Multi-Model Comparison
 
-**forge-dependency-update-sentinel** — [Olino3/forge](https://github.com/Olino3/forge):
-```yaml
-steps:
-  - agent:
-      model: gpt-5.1-codex-mini
-      prompt: |
-        Check if this dependency update introduces breaking changes.
-        Classify as: [safe, review-needed, breaking].
-```
+[`HemSoft/hs-buddy`](https://github.com/HemSoft/hs-buddy) runs the same PR analysis with three different models:
+- `pr-analyzer-a` → `claude-sonnet-4-5`
+- `pr-analyzer-b` → `gemini-2-pro`
+- `pr-analyzer-c` → `gpt-4o`
 
-**Cost comparison:** ~3-5x cheaper than default, ~10x cheaper than opus.
+This is a useful pattern for evaluating model performance on your specific task.
 
----
+## Rules
 
-## Pattern 3: claude-opus-4.6 — Planning & Decomposition
-
-**When:** The agent needs to reason about architecture, break down complex features, or plan multi-step processes.
-
-**Key traits:**
-- 🧠 Strongest multi-step reasoning
-- 📐 Best at architectural decisions
-- 💰 Most expensive (use sparingly)
-- 🐢 Slowest response time
-
-### Production Examples
-
-**forge-feature-decomposer** — [Olino3/forge](https://github.com/Olino3/forge):
-```yaml
-steps:
-  - agent:
-      model: claude-opus-4.6
-      prompt: |
-        Decompose this feature request into implementable sub-tasks.
-        For each sub-task, specify:
-        1. Title and description
-        2. Estimated complexity (S/M/L)
-        3. Dependencies on other sub-tasks
-        4. Acceptance criteria
-
-        Create GitHub issues for each sub-task.
-```
-
-**forge-milestone-lifecycle** — [Olino3/forge](https://github.com/Olino3/forge):
-```yaml
-steps:
-  - agent:
-      model: claude-opus-4.6
-      prompt: |
-        Analyze the current milestone progress:
-        1. Review all open issues in the milestone
-        2. Identify blockers and risks
-        3. Recommend re-prioritization if needed
-        4. Generate a status report with timeline projections
-```
-
-**Enterprise SRE weekly SLO report:**
-```yaml
-steps:
-  - agent:
-      model: claude-opus-4.6
-      prompt: |
-        Analyze SLO metrics for the past week.
-        Correlate error spikes with deployment events.
-        Produce an executive summary with:
-        - SLO compliance percentage
-        - Top 3 reliability risks
-        - Recommended actions with priority
-```
-
-**When NOT to use opus:**
-- Simple triage or labeling (use codex-mini)
-- One-off comments or reviews (use default)
-- Any workflow that runs frequently (cost adds up fast)
-
----
-
-## Pattern 4: claude-sonnet-4.5 — Investigation & Debugging
-
-**When:** The agent needs to dig into code, debug failures, or investigate complex issues.
-
-**Key traits:**
-- 🔍 Strong code comprehension
-- ⚖️ Good balance of depth and speed
-- 💰 Mid-range cost
-- 🧪 Good at reading stack traces and logs
-
-### Production Example
-
-**oh-my-posh/workflow-doctor** — [JanDeDobbeleer/oh-my-posh](https://github.com/JanDeDobbeleer/oh-my-posh):
-```yaml
-steps:
-  - agent:
-      model: claude-sonnet-4.5
-      prompt: |
-        A CI workflow has failed. Investigate:
-        1. Read the workflow logs
-        2. Identify the root cause
-        3. Check if this is a flaky test or a real failure
-        4. If real, trace the failure back to the most recent commit
-        5. Suggest a fix with code diff
-```
-
----
-
-## Cost & Speed Tradeoffs
-
-| Model | Relative Cost | Speed | Best For |
-|---|---|---|---|
-| `gpt-5.1-codex-mini` | $ | ⚡⚡⚡ | Classification, labeling, detection |
-| Default (Copilot) | $$ | ⚡⚡ | General-purpose (90% of workflows) |
-| `claude-sonnet-4.5` | $$$ | ⚡⚡ | Investigation, debugging, code analysis |
-| `claude-opus-4.6` | $$$$ | ⚡ | Planning, decomposition, architecture |
-
-### Cost Optimization Tips
-
-1. **Use codex-mini for high-frequency workflows.** A triage workflow that runs 50x/day at opus pricing will bankrupt your budget.
-2. **Use opus only for low-frequency, high-value tasks.** Weekly planning, milestone reviews, architectural decomposition.
-3. **Don't specify a model unless you have a reason.** Default is free from version lock-in and improves automatically.
-4. **Consider a hybrid approach.** Use codex-mini for classification in step 1, then default for the response in step 2.
-
-### Hybrid Example
-
-```yaml
-steps:
-  # Step 1: Fast classification
-  - agent:
-      model: gpt-5.1-codex-mini
-      prompt: |
-        Classify this issue: [bug, feature, question, spam].
-        Output only the label.
-
-  # Step 2: Detailed response (only if not spam)
-  - agent:
-      prompt: |
-        Based on the classification, provide a helpful response to the issue author.
-```
-
----
-
-## Real-World Model Usage: Production Analysis
-
-> **Finding: 72 out of 79 production workflows use the default model**, even for complex 15–26KB prompts. Only 7 use `claude-opus-4.5`.
-
-This reveals a common mismatch — many workflows that would benefit from a stronger model are running on default because nobody explicitly chose a model.
-
-### The Mismatch Rule
-
-| Signal | Right Model | Why |
-|---|---|---|
-| Simple triage, labeling, routing | Default (or codex-mini) | Classification doesn't need deep reasoning |
-| Complex reasoning + large prompt (>8KB) + narrative writing | `claude-opus-4.6` | Large prompts need stronger attention; narrative quality scales with model |
-| Sentiment analysis with nuance | `claude-opus-4.6` | Tone and nuance detection is weak in smaller models |
-| Data analysis with pre-fetched data | Default | The pre-step did the hard work; agent just summarizes |
-
-### How to Audit Your Model Choice
-
-Ask these questions:
-1. **Is the prompt over 8KB?** If yes, consider opus — smaller models lose coherence on very long prompts.
-2. **Does the output require nuanced writing?** Weekly narratives, sentiment reports, and executive summaries benefit from opus.
-3. **Is the workflow high-frequency?** If it runs 10+ times/day, the cost of opus adds up — stick with default or codex-mini.
-4. **Is the task mechanical?** Labeling, routing, and classification don't improve with opus.
-
-*Source: Analysis of 79 production workflows*
-
----
-
-## Quick Reference
-
-```
-Is the task classification or labeling?     → gpt-5.1-codex-mini
-Is the task planning or decomposition?      → claude-opus-4.6
-Is the task debugging or investigation?     → claude-sonnet-4.5
-Is the task anything else?                  → Don't specify (use default)
-Does the workflow run 10+ times per day?    → Avoid opus, prefer codex-mini
-Is the prompt >8KB with narrative output?   → Consider opus
-```
+1. **Start with the default.** 93% of workflows don't specify a model. Only override when you have a reason.
+2. **Use `codex-mini` for classification tasks** — labeling, triage, simple checks. It's fast and cheap.
+3. **Use `opus` for planning and architecture** — feature decomposition, cross-repo sync, doc generation from complex code.
+4. **Use `haiku` for prose-heavy output** — release notes, docs, reports. Good quality at low cost.
+5. **Use `sonnet` for code investigation** — CI debugging, PR review, code analysis. Balanced reasoning + speed.
+6. **Match cost to stakes** — a daily triage workflow runs 365×/year; use a cheap model. A quarterly architecture review runs 4×/year; use the best.

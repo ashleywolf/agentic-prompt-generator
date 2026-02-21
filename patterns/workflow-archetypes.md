@@ -1,759 +1,217 @@
-# Workflow Archetypes — What type of workflow am I building?
+# Workflow Archetypes
 
-## The 8 Archetypes
+> **"What type am I building?"**
 
-Every agentic workflow fits one of these eight archetypes. Start by identifying yours — it determines your trigger, output, state, and prompt structure.
+## The Numbers
 
-| # | Archetype | Trigger | Output | State | Frequency |
-|---|---|---|---|---|---|
-| 1 | **Issue Triage** | `issues:[opened]` | Labels + Comment | Stateless | Event-driven |
-| 2 | **CI Doctor** | `workflow_run(failure)` | Comment on PR | cache-memory | Event-driven |
-| 3 | **Daily Improver** | `schedule:daily` | Draft PR | cache-memory | 1x/day |
-| 4 | **Weekly Report** | `schedule:weekly` | Discussion | cache-memory | 1x/week |
-| 5 | **Slash Command** | `slash_command` | Comment / Review | cache-memory | On-demand |
-| 6 | **Moderation** | `issues/PR:[opened]` | Labels + Hide | Stateless | Event-driven |
-| 7 | **Content Pipeline** | `dispatch` | Discussion → Dispatch | Chained | On-demand |
-| 8 | **Enterprise SRE** | `schedule:weekly` | Discussion + Artifact | Keyed cache | 1x/week |
+From **679 workflows** across **269 repos**, clear archetypes emerge from naming patterns and trigger configurations:
 
----
-
-## Archetype 1: Issue Triage
-
-> **"Classify and respond to every new issue automatically."**
-
-### When to Use
-- Open-source project with 5+ issues/day
-- Issues need consistent labeling and first response
-- Maintainers are overwhelmed with triage
-
-### Architecture
-
-```yaml
-on:
-  issues:
-    types: [opened]
-
-steps:
-  - agent:
-      prompt: |
-        Triage this issue:
-        1. Check for duplicates
-        2. Classify as [bug, feature, question, docs]
-        3. Add priority label
-        4. Provide a helpful first response
-
-outputs:
-  - type: add-labels
-    config:
-      allowed: [bug, feature, question, docs, duplicate, needs-repro]
-  - type: add-comment
-    config:
-      target: triggering
-      hide-older-comments: true
-
-safety:
-  rate-limit: { max-runs: 50, per: day }
-```
-
-### Key Decisions
-- **Duplicate detection:** Do you search existing issues or just classify?
-- **Auto-close:** Do you close obvious duplicates or just label them?
-- **Response tone:** Friendly community bot or minimal triage label?
-
-### Common Gotchas
-- Without `allowed` labels, the agent invents creative labels
-- Without `hide-older-comments`, re-triggered workflows spam the thread
-- Test with edge cases: empty body, non-English, spam, very long issues
-
-### Production Examples
-- [appwrite/appwrite](https://github.com/appwrite/appwrite) — batch daily triage
-- [apollographql/apollo](https://github.com/apollographql) — per-issue triage
-- [apollographql/rover](https://github.com/apollographql/rover) — CLI-specific triage
-- [Kong/kong](https://github.com/Kong/kong) — component-based routing
+| Archetype | Workflows | Repos | Defining Feature |
+|-----------|-----------|-------|------------------|
+| Issue Triage | 41 | 40 | `issues` trigger, labels + comments |
+| Daily Improver | 155 | 102 | `schedule` trigger, code changes |
+| CI Doctor | 16 | 16 | `workflow_run` trigger, failure analysis |
+| Weekly Report | 35 | 31 | `schedule` trigger, summary output |
+| Slash Command | 35 | ~10 | `slash_command` trigger, on-demand |
+| PR Reviewer | ~50 | ~40 | `pull_request` trigger, review comments |
+| Moderation | 2 | 2 | Content policy enforcement |
+| Upstream Monitor | 11 | ~10 | `schedule`, watches dependencies |
 
 ---
 
-## Archetype 2: CI Doctor
+## Archetype 1: Issue Triage (41 workflows, 40 repos)
 
-> **"Diagnose CI failures and tell the developer what went wrong."**
+**What it does:** Reads new issues, classifies them, applies labels, and optionally comments with guidance.
 
-### When to Use
-- CI failures are frequent and varied
-- Developers waste time reading raw logs
-- Flaky tests need to be identified and tracked
+**Triggers:** `issues` + `workflow_dispatch`
+**Output:** `add-labels` + `add-comment`
+**Model:** Default (no explicit model needed)
 
-### Architecture
+**Top real examples:**
+- [`appwrite/appwrite/issue-triage`](https://github.com/appwrite/appwrite/blob/main/.github/workflows/issue-triage.md) (54,898 ⭐)
+- [`apolloconfig/apollo/issue-triage`](https://github.com/apolloconfig/apollo/blob/main/.github/workflows/issue-triage.md) (29,779 ⭐)
+- [`github/copilot-sdk/issue-triage`](https://github.com/github/copilot-sdk/blob/main/.github/workflows/issue-triage.md) (7,254 ⭐)
+- [`frankbria/ralph-claude-code/triage-incoming-issues`](https://github.com/frankbria/ralph-claude-code/blob/main/.github/workflows/triage-incoming-issues.md) (7,097 ⭐)
+- [`evcc-io/evcc/triage-agent`](https://github.com/evcc-io/evcc/blob/main/.github/workflows/triage-agent.md) (6,169 ⭐)
+- [`dotnet/aspire/daily-repo-status`](https://github.com/dotnet/aspire/blob/main/.github/workflows/daily-repo-status.md) (5,457 ⭐)
+- [`apache/cloudstack/issue-triage-agent`](https://github.com/apache/cloudstack/blob/main/.github/workflows/issue-triage-agent.md) (2,800 ⭐)
+- [`opencollective/opencollective/issue-triage-agent`](https://github.com/opencollective/opencollective/blob/main/.github/workflows/issue-triage-agent.md) (2,248 ⭐)
+- [`apollographql/rover/issue-triage`](https://github.com/apollographql/rover/blob/main/.github/workflows/issue-triage.md) (444 ⭐)
 
-```yaml
-on:
-  workflow_run:
-    workflows: ["CI", "Build", "Tests"]
-    types: [completed]
-    # Filter to failures only in workflow logic
-
-memory:
-  type: cache
-
-steps:
-  - agent:
-      model: claude-sonnet-4.5
-      prompt: |
-        A CI workflow failed. Diagnose it:
-        1. Read the workflow run logs
-        2. Check if this error signature is in memory (known flaky)
-        3. Identify root cause
-        4. Post a diagnosis on the associated PR
-
-        If this is a new error pattern, save it to memory.
-
-outputs:
-  - type: add-comment
-    config:
-      target: triggering
-      hide-older-comments: true
-
-safety:
-  rate-limit: { max-runs: 20, per: hour }
-```
-
-### Key Decisions
-- **Model:** claude-sonnet-4.5 for deep investigation, default for simple pattern matching
-- **Flaky tracking:** Use cache-memory to identify recurring failures
-- **Scope:** Diagnose only, or also suggest fixes with code?
-
-### Common Gotchas
-- Filter to failures only — don't trigger on successful runs
-- Rate limit aggressively — CI failures can cascade
-- Cache known flaky test patterns to avoid repeated analysis
-
-### Production Example
-- [JanDeDobbeleer/oh-my-posh](https://github.com/JanDeDobbeleer/oh-my-posh) — workflow-doctor with claude-sonnet-4.5
+**Pattern notes:**
+- The most popular archetype by repo adoption
+- Most use default model — classification doesn't need expensive models
+- Often paired with `stop_after: +30d` for long-running triage windows
 
 ---
 
-## Archetype 3: Daily Improver
+## Archetype 2: Daily Improver (155 workflows, 102 repos)
 
-> **"Make one small improvement to the codebase every day."**
+**What it does:** Runs on a schedule, finds something to improve, and submits a PR.
 
-### When to Use
-- Gradual code quality improvement
-- Test coverage expansion
-- Accessibility, performance, or security hardening
-- Tech debt reduction campaigns
+**Triggers:** `schedule` + `workflow_dispatch`
+**Output:** `create-pull-request`
+**Model:** Default or `gpt-5.1-codex-mini`
+**Pre-steps:** Often yes (run tests/linters first)
 
-### Architecture
+**Sub-variants:**
 
-```yaml
-on:
-  schedule:
-    - cron: '0 9 * * 1-5'   # Weekdays at 9am UTC
+### Daily Repo Status (57 repos)
+- [`dotnet/maui/daily-repo-status`](https://github.com/dotnet/maui/blob/main/.github/workflows/daily-repo-status.md) (23,180 ⭐)
+- [`erigontech/erigon/daily-repo-status`](https://github.com/erigontech/erigon/blob/main/.github/workflows/daily-repo-status.md) (3,531 ⭐)
+- [`apache/cloudstack/daily-repo-status`](https://github.com/apache/cloudstack/blob/main/.github/workflows/daily-repo-status.md) (2,800 ⭐)
+- [`foxminchan/BookWorm/daily-repo-status`](https://github.com/foxminchan/BookWorm/blob/main/.github/workflows/daily-repo-status.md) (475 ⭐)
+- [`javaevolved/javaevolved.github.io/daily-repo-status`](https://github.com/javaevolved/javaevolved.github.io/blob/main/.github/workflows/daily-repo-status.md) (152 ⭐)
 
-memory:
-  type: cache
+### Daily Test Improver (13 repos)
+- [`kaito-project/aikit/daily-test-improver`](https://github.com/kaito-project/aikit/blob/main/.github/workflows/daily-test-improver.md) (509 ⭐)
+- [`lablup/backend.ai-webui/daily-test-improver`](https://github.com/lablup/backend.ai-webui/blob/main/.github/workflows/daily-test-improver.md) (125 ⭐)
+- [`talk2MeGooseman/stream_closed_captioner_phoenix/daily-test-improver`](https://github.com/talk2MeGooseman/stream_closed_captioner_phoenix/blob/main/.github/workflows/daily-test-improver.md) (24 ⭐)
 
-steps:
-  - agent:
-      prompt: |
-        Find ONE improvement to make today:
-        1. Check memory for previously improved files (skip them)
-        2. Scan the codebase for the highest-impact opportunity
-        3. Make the change
-        4. Run tests to verify
-        5. Save the file path to memory
+### Daily Performance Improver (9 repos)
+- [`devantler-tech/ksail/daily-perf-improver`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/daily-perf-improver.md) (130 ⭐)
+- [`fslaborg/FsMath/daily-perf-improver`](https://github.com/fslaborg/FsMath/blob/main/.github/workflows/daily-perf-improver.md) (17 ⭐)
+- [`iamnbutler/sol-ui/daily-perf-improver`](https://github.com/iamnbutler/sol-ui/blob/main/.github/workflows/daily-perf-improver.md) (11 ⭐)
 
-        Rules:
-        - ONE improvement per run, not multiple
-        - Must not break existing tests
-        - Keep changes small and reviewable
-
-outputs:
-  - type: create-pull-request
-    config:
-      draft: true
-      if-no-changes: ignore
-      labels: ["automated", "improvement"]
-      max: 1
-
-safety:
-  stop-after: "+90d"
-```
-
-### Key Decisions
-- **Scope:** Code simplification? Test coverage? Docs? Pick one focus area.
-- **Cadence:** Daily is aggressive — consider 3x/week for lower noise.
-- **Review process:** Draft PRs need human reviewers assigned.
-
-### Common Gotchas
-- Without memory, the agent will "improve" the same file repeatedly
-- Without `if-no-changes: ignore`, you get empty PRs
-- Without `stop-after`, the workflow runs forever even after the campaign ends
-- Always `draft: true` — automated code should never auto-merge
-
-### Production Examples
-- [BabylonJS](https://github.com/BabylonJS) — daily code improvements
-- care_fe — daily test coverage expansion
+### Code Simplifier (13 repos)
+- [`BabylonJS/Babylon.js/code-simplifier`](https://github.com/BabylonJS/Babylon.js/blob/main/.github/workflows/code-simplifier.md) (25,113 ⭐)
+- [`devantler-tech/ksail/daily-code-simplifier`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/daily-code-simplifier.md) (130 ⭐)
+- [`Kong/kongctl/code-simplifier`](https://github.com/Kong/kongctl/blob/main/.github/workflows/code-simplifier.md) (12 ⭐)
 
 ---
 
-## Archetype 4: Weekly Report
+## Archetype 3: CI Doctor (16 workflows, 16 repos)
 
-> **"Generate a recurring summary of project health, metrics, or activity."**
+**What it does:** Triggers after a CI workflow fails, analyzes the failure, and comments with a diagnosis.
 
-### When to Use
-- Stakeholders need regular project visibility
-- Metrics should be tracked week-over-week
-- Team needs a digest of what happened
+**Triggers:** `workflow_run`
+**Output:** `add-comment` on the failing PR/issue
+**Model:** Default or `gpt-5.1-codex-mini`
 
-### Architecture
+**Real examples:**
+- [`JanDeDobbeleer/oh-my-posh/workflow-doctor`](https://github.com/JanDeDobbeleer/oh-my-posh/blob/main/.github/workflows/workflow-doctor.md) — Uses `claude-sonnet-4.5` (21,566 ⭐)
+- [`devantler-tech/ksail/ci-doctor`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/ci-doctor.md) (130 ⭐)
+- [`tosin2013/mcp-adr-analysis-server/ci-doctor`](https://github.com/tosin2013/mcp-adr-analysis-server/blob/main/.github/workflows/ci-doctor.md) (19 ⭐)
+- [`sayinmehmet47/kitapKurdu/ci-doctor`](https://github.com/sayinmehmet47/kitapKurdu/blob/main/.github/workflows/ci-doctor.md) (17 ⭐)
+- [`ianlintner/rust-oauth2-server/ci-doctor`](https://github.com/ianlintner/rust-oauth2-server/blob/main/.github/workflows/ci-doctor.md) — Uses `gpt-5.1-codex-mini` (3 ⭐)
 
-```yaml
-on:
-  schedule:
-    - cron: '0 9 * * 1'    # Monday 9am UTC
-
-memory:
-  type: cache
-  retention-days: 35       # Keep 5 weeks of history
-
-steps:
-  - run: python fetch_metrics.py > /tmp/metrics.json
-  - agent:
-      prompt: |
-        Generate a weekly health report:
-        1. Read metrics from /tmp/metrics.json
-        2. Compare to previous week (from memory)
-        3. Highlight trends and anomalies
-        4. Provide actionable recommendations
-        5. Save this week's metrics to memory for next week
-
-outputs:
-  - type: create-discussion
-    config:
-      category: "Reports"
-      title-prefix: "Weekly Health Report"
-      close-older: true
-      expires: "14d"
-
-safety:
-  stop-after: "+1y"
-```
-
-### Key Decisions
-- **Data source:** Pre-fetch in run step or agent queries directly?
-- **Comparison:** Week-over-week requires cache-memory or snapshot pattern
-- **Audience:** Technical team (detailed) or leadership (executive summary)?
-
-### Common Gotchas
-- Use `create-discussion` NOT `create-issue` for reports
-- Always `close-older: true` to avoid accumulating open discussions
-- Set `retention-days` on cache to keep enough weeks for trend comparison
-- Pre-fetch data in a `run` step for large datasets
-
-### Production Examples
-- org-health — organization-wide health metrics
-- weekly-newsletter — team activity digest
+**Pattern notes:**
+- `workflow_run` is the defining trigger — it chains after CI completion
+- All 16 instances follow the same name (`ci-doctor`) or close variant (`workflow-doctor`)
+- Low barrier to adopt: just add the workflow file and point it at your CI
 
 ---
 
-## Archetype 5: Slash Command
+## Archetype 4: Weekly Report (35 workflows, 31 repos)
 
-> **"Let developers invoke AI tools on-demand via comments."**
+**What it does:** Runs weekly to generate summaries, research digests, or status reports.
 
-### When to Use
-- Interactive tools that users invoke when needed
-- Ad-hoc analysis, planning, or review
-- Tools that should only run when explicitly requested
+**Triggers:** `schedule` + `workflow_dispatch`
+**Output:** `create-issue` or `create-discussion`
+**Model:** Default
 
-### Architecture
+**Real examples:**
+- [`github/gh-aw/weekly-issue-summary`](https://github.com/github/gh-aw/blob/main/.github/workflows/weekly-issue-summary.md) (3,356 ⭐)
+- [`devantler-tech/ksail/weekly-research`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/weekly-research.md) (130 ⭐)
+- [`lablup/backend.ai-webui/weekly-team-status`](https://github.com/lablup/backend.ai-webui/blob/main/.github/workflows/weekly-team-status.md) (125 ⭐)
+- [`devantler-tech/ksail/weekly-promote-ksail`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/weekly-promote-ksail.md) (130 ⭐)
 
-```yaml
-on:
-  issue_comment:
-    types: [created]
-  # Filter for /command in workflow logic
-
-memory:
-  type: cache
-
-steps:
-  - agent:
-      prompt: |
-        The user invoked a command. Based on the command:
-
-        /plan — Generate an implementation plan for this issue
-        /nit — Leave nitpick review comments on this PR
-        /feedback — Provide structured feedback
-
-outputs:
-  - type: add-comment
-    config:
-      target: triggering
-      hide-older-comments: true
-
-safety:
-  roles: [maintainer, collaborator]
-  rate-limit: { max-runs: 10, per: hour }
-```
-
-### Key Decisions
-- **Command routing:** Single workflow with multiple commands or one workflow per command?
-- **Permissions:** Who can invoke? Maintainers only or all collaborators?
-- **Output type:** Comment for analysis, review comments for code feedback
-
-### Common Gotchas
-- **Always restrict `roles`** — without it, any commenter can trigger
-- **Always `hide-older-comments`** — users will invoke multiple times
-- Rate limit per user, not just globally
-
-### Production Examples
-- `/plan` — implementation planning
-- `/nit` — nitpick code review
-- `/grumpy` — opinionated review (personality-driven)
-- `/feedback` — structured feedback
+**Sub-variants:**
+- `weekly-research` (17 repos) — Researches topics and creates digests
+- `weekly-team-status` — Team activity summaries
+- `weekly-promote-*` — Community outreach automation
 
 ---
 
-## Archetype 6: Moderation
+## Archetype 5: Slash Command (35 workflows)
 
-> **"Automatically detect and handle spam, abuse, or policy violations."**
+**What it does:** Responds to on-demand commands in issue/PR comments.
 
-### When to Use
-- High-traffic repos with spam problems
-- Content policy enforcement
-- Automated quality gates on new content
+**Triggers:** `slash_command` (sometimes + `issues`)
+**Output:** `add-comment`
+**Model:** Varies
 
-### Architecture
-
-```yaml
-on:
-  issues:
-    types: [opened]
-  pull_request:
-    types: [opened]
-
-steps:
-  - agent:
-      model: gpt-5.1-codex-mini     # Fast classification
-      prompt: |
-        Classify this content:
-        - spam: Promotional, irrelevant, or bot-generated
-        - abuse: Violates code of conduct
-        - low-quality: Missing required information
-        - valid: Legitimate contribution
-
-        If spam or abuse, add the label and minimize the content.
-        If low-quality, comment asking for more information.
-        If valid, do nothing.
-
-outputs:
-  - type: add-labels
-    config:
-      allowed: [spam, abuse, low-quality]
-
-safety:
-  strict: true
-  rate-limit: { max-runs: 100, per: hour }
-```
-
-### Key Decisions
-- **Model:** codex-mini for speed (classification doesn't need deep reasoning)
-- **Action on detection:** Label only, or also hide/close?
-- **False positive handling:** How does a human override?
-
-### Common Gotchas
-- Use a fast model (codex-mini) — moderation must be near-instant
-- Always have a human override mechanism (label removal triggers unhide)
-- Log false positives to improve the prompt over time
-- Be careful with auto-close — false positives alienate real users
-
-### Production Example
-- [f/prompts.chat](https://github.com/f/awesome-chatgpt-prompts) — ai-moderator for spam detection
+**Real examples:**
+- [`github/gh-aw/q`](https://github.com/github/gh-aw/blob/main/.github/workflows/q.md) — Answer questions (3,356 ⭐)
+- [`github/gh-aw/scout`](https://github.com/github/gh-aw/blob/main/.github/workflows/scout.md) — Code search (3,356 ⭐)
+- [`github/gh-aw/grumpy-reviewer`](https://github.com/github/gh-aw/blob/main/.github/workflows/grumpy-reviewer.md) — On-demand code review (3,356 ⭐)
+- [`github/gh-aw/archie`](https://github.com/github/gh-aw/blob/main/.github/workflows/archie.md) — Architecture analysis (3,356 ⭐)
+- [`github/gh-aw/plan`](https://github.com/github/gh-aw/blob/main/.github/workflows/plan.md) — Planning assistant (3,356 ⭐)
+- [`devantler-tech/ksail/pr-fix`](https://github.com/devantler-tech/ksail/blob/main/.github/workflows/pr-fix.md) — Fix PR issues on request (130 ⭐)
 
 ---
 
-## Archetype 7: Content Pipeline
+## Archetype 6: PR Reviewer (~50 workflows)
 
-> **"Chain multiple workflows to produce, refine, and publish content."**
+**What it does:** Reviews pull requests for quality, consistency, or specific checks.
 
-### When to Use
-- Multi-stage content creation (draft → review → publish)
-- Workflows that need different agents/models per stage
-- Complex pipelines where each stage has different requirements
+**Triggers:** `pull_request`
+**Output:** `add-comment` (review comments)
+**Model:** Default or `claude-sonnet`
 
-### Architecture
-
-```yaml
-# Stage 1: Draft
-on:
-  workflow_dispatch:
-    inputs:
-      topic:
-        required: true
-
-steps:
-  - agent:
-      prompt: |
-        Write a technical blog post draft about: ${{ inputs.topic }}
-
-outputs:
-  - type: create-discussion
-    config:
-      category: "Drafts"
-      title-prefix: "Draft"
-  - type: dispatch-workflow
-    config:
-      workflow: blog-linker.yml
-      inputs:
-        draft_discussion_id: "${{ outputs.discussion_id }}"
-```
-
-```yaml
-# Stage 2: Link & SEO
-on:
-  workflow_dispatch:
-    inputs:
-      draft_discussion_id:
-        required: true
-
-steps:
-  - agent:
-      prompt: |
-        Read the draft from discussion ${{ inputs.draft_discussion_id }}.
-        Add internal links, SEO metadata, and cross-references.
-
-outputs:
-  - type: create-pull-request
-    config:
-      draft: true
-      title-prefix: "[blog] "
-```
-
-### Key Decisions
-- **Handoff mechanism:** dispatch-workflow, discussion, or artifacts?
-- **Human-in-the-loop:** Where do humans review/approve?
-- **Failure handling:** What happens if stage 2 fails?
-
-### Common Gotchas
-- Each stage needs its own error handling — don't assume upstream succeeded
-- Use discussions for visible handoff points where humans can intervene
-- Keep each stage focused — don't try to do everything in one workflow
-
-### Production Example
-- blog-drafter → blog-linker pipeline
+**Real examples:**
+- [`f/prompts.chat/spam-check`](https://github.com/f/prompts.chat/blob/main/.github/workflows/spam-check.md) — Spam detection on PRs (145,906 ⭐)
+- [`github/copilot-sdk/sdk-consistency-review`](https://github.com/github/copilot-sdk/blob/main/.github/workflows/sdk-consistency-review.md) — SDK consistency (7,254 ⭐)
+- [`ZSWatch/ZSWatch/docs-pr-analyze`](https://github.com/ZSWatch/ZSWatch/blob/main/.github/workflows/docs-pr-analyze.md) — Docs PR analysis (3,128 ⭐)
+- [`llm-d/llm-d/link-checker`](https://github.com/llm-d/llm-d/blob/main/.github/workflows/link-checker.md) — Link validation (2,516 ⭐)
+- [`llm-d/llm-d/typo-checker`](https://github.com/llm-d/llm-d/blob/main/.github/workflows/typo-checker.md) — Typo detection (2,516 ⭐)
+- [`elastic/opentelemetry-collector-components/pr-review`](https://github.com/elastic/opentelemetry-collector-components/blob/main/.github/workflows/pr-review.md) — Deep review with `claude-opus-4.6` (16 ⭐)
+- [`wp-media/wp-rocket/pr-release-doc-generator`](https://github.com/wp-media/wp-rocket/blob/main/.github/workflows/pr-release-doc-generator.md) — Release doc generation on PR (738 ⭐)
 
 ---
 
-## Archetype 8: Enterprise SRE
+## Archetype 7: Moderation (2 workflows)
 
-> **"Monitor infrastructure, track SLOs, and generate compliance reports."**
+**What it does:** Enforces content policies on issues and PRs.
 
-### When to Use
-- SLO tracking and reporting
-- Multi-service health monitoring
-- Compliance auditing with evidence collection
-- Incident correlation and analysis
+**Triggers:** `issues` + `pull_request`
+**Output:** `add-labels`, moderation actions
+**Model:** Default
 
-### Architecture
+**Real examples:**
+- [`f/prompts.chat/spam-check`](https://github.com/f/prompts.chat/blob/main/.github/workflows/spam-check.md) — Checks for spam in PRs/issues (145,906 ⭐)
+- [`github/gh-aw/ai-moderator`](https://github.com/github/gh-aw/blob/main/.github/workflows/ai-moderator.md) — AI-powered content moderation (3,356 ⭐)
 
-```yaml
-on:
-  schedule:
-    - cron: '0 9 * * 1'    # Monday 9am UTC
-
-memory:
-  type: cache
-  retention-days: 35        # 5 weeks of SLO history
-
-steps:
-  - run: |
-      az login --service-principal \
-        -u ${{ secrets.AZURE_CLIENT_ID }} \
-        -p ${{ secrets.AZURE_CLIENT_SECRET }} \
-        --tenant ${{ secrets.AZURE_TENANT_ID }}
-      python fetch_slo_data.py > /tmp/slo-data.json
-      python generate_charts.py --input /tmp/slo-data.json --output /tmp/charts/
-
-  - agent:
-      model: claude-opus-4.6
-      prompt: |
-        Generate the weekly SLO compliance report.
-
-        ## Data Sources
-        - /tmp/slo-data.json — SLO metrics for all services
-        - /tmp/charts/ — Pre-generated charts
-
-        ## Report Structure
-        1. Executive Summary (3 sentences)
-        2. SLO Compliance Table (per service)
-        3. Incidents & Correlations
-        4. Trend Analysis (vs previous weeks from memory)
-        5. Risk Assessment & Recommendations
-
-        ## Rules
-        - Use keyed memory: "slo:{service}:{week}" for history
-        - Flag any service below 99.9% SLO target
-        - Correlate error spikes with deployment events
-        - DO NOT access external services — all data is pre-fetched
-
-outputs:
-  - type: create-discussion
-    config:
-      category: "SLO Reports"
-      title-prefix: "Weekly SLO Report"
-      close-older: true
-      expires: "30d"
-  - type: upload-asset
-    config:
-      path: /tmp/charts/
-
-safety:
-  strict: true
-  lock-for-agent: true
-  stop-after: "+1y"
-  network:
-    allowed: ["api.github.com"]
-  permissions:
-    contents: read
-    discussions: write
-```
-
-### Key Decisions
-- **Model:** claude-opus-4.6 for complex analysis and correlation
-- **Data ingestion:** Pre-step with service authentication
-- **State:** Keyed cache-memory for per-service trend tracking
-- **Charts:** Generate in pre-step, upload as assets
-
-### Common Gotchas
-- Pre-fetch ALL data — don't let the agent call cloud APIs directly
-- Use `strict: true` and restricted network for enterprise compliance
-- Keyed memory with retention avoids unbounded state growth
-- Charts should be generated by code (matplotlib, plotly), not the agent
-
-### Production Example
-- An enterprise SRE workflow — Azure SLO monitoring with weekly reports
+**Pattern notes:**
+- Rare but impactful — `f/prompts.chat` is the highest-starred repo in the entire scan
+- Critical for high-traffic public repos
 
 ---
 
-## Picking Your Archetype
+## Archetype 8: Upstream Monitor (11 repos)
 
-```
-What does your workflow do?
+**What it does:** Watches upstream dependencies for changes and alerts or auto-updates.
 
-├── Respond to new issues?
-│   ├── Classify and label → Issue Triage (1)
-│   └── Detect spam/abuse → Moderation (6)
-│
-├── Respond to CI/CD events?
-│   └── Diagnose failures → CI Doctor (2)
-│
-├── Run on a schedule?
-│   ├── Make code changes → Daily Improver (3)
-│   ├── Generate reports → Weekly Report (4)
-│   └── Monitor infrastructure → Enterprise SRE (8)
-│
-├── Triggered by humans on-demand?
-│   ├── Via comment → Slash Command (5)
-│   └── Via UI → Content Pipeline (7) or workflow_dispatch
-│
-└── Chain multiple stages?
-    └── Content Pipeline (7)
-```
+**Triggers:** `schedule` + `workflow_dispatch`
+**Output:** `create-issue` or `create-pull-request`
+**Model:** Default
+
+**Real examples:**
+- [`npgsql/efcore.pg/sync-to-latest-ef`](https://github.com/npgsql/efcore.pg/blob/main/.github/workflows/sync-to-latest-ef.md) — Syncs to upstream EF Core (1,801 ⭐)
+- [`llm-d/llm-d-kv-cache/upstream-monitor`](https://github.com/llm-d/llm-d-kv-cache/blob/main/.github/workflows/upstream-monitor.md) — Monitors upstream changes (103 ⭐)
+- [`llm-d/llm-d-inference-sim/upstream-monitor`](https://github.com/llm-d/llm-d-inference-sim/blob/main/.github/workflows/upstream-monitor.md) — Upstream dependency tracking (87 ⭐)
+- [`drehelis/gcp-emulator-ui/check-emulator-updates`](https://github.com/drehelis/gcp-emulator-ui/blob/main/.github/workflows/check-emulator-updates.md) — Checks GCP emulator releases (35 ⭐)
 
 ---
 
-## Timeout Guidance
+## Quick Reference: Which Archetype Am I?
 
-> Timeouts in production workflows range from 5 to 120 minutes with no clear correlation to complexity. Use these recommendations by archetype:
+| I want to… | Archetype | Start from |
+|-------------|-----------|------------|
+| Label and classify issues | **Issue Triage** | `appwrite/appwrite/issue-triage` |
+| Run daily code improvements | **Daily Improver** | `BabylonJS/Babylon.js/code-simplifier` |
+| Diagnose CI failures | **CI Doctor** | `JanDeDobbeleer/oh-my-posh/workflow-doctor` |
+| Generate weekly summaries | **Weekly Report** | `devantler-tech/ksail/weekly-research` |
+| Add on-demand commands | **Slash Command** | `github/gh-aw/q` |
+| Review PRs automatically | **PR Reviewer** | `github/copilot-sdk/sdk-consistency-review` |
+| Moderate content | **Moderation** | `f/prompts.chat/spam-check` |
+| Watch upstream deps | **Upstream Monitor** | `npgsql/efcore.pg/sync-to-latest-ef` |
 
-| Archetype | Recommended Timeout | Rationale |
-|---|---|---|
-| Simple triage / labeling | 10–15 min | Classification is fast; if it's not done in 15 min, something is wrong |
-| Single-topic report | 30 min | One data source, one output — straightforward |
-| Multi-source data + narrative | 60 min | Multiple pre-fetches, cross-referencing, long-form writing |
-| Data-heavy + opus model | 60–120 min | Opus is slower; large data analysis needs room |
+## Rules
 
-```yaml
-# Set timeout in the workflow
-timeout-minutes: 30    # Adjust based on archetype above
-```
-
-**Rule of thumb:** Start with the recommended timeout. If runs consistently finish in <50% of the timeout, lower it. If runs hit the timeout, either the data is too large (add a pre-step) or the prompt needs to be more focused.
-
-*Source: Analysis of 79 production workflows*
-
----
-
-## Additional Archetypes from Production
-
-These six sub-archetypes emerged from production workflow analysis. Each is a variant of the core eight, specialized for a common real-world pattern.
-
-### Sub-archetype: Team Activity Report
-
-> Prefetch data → read files → write narrative issue
-
-```yaml
-on:
-  schedule:
-    - cron: '0 9 * * 1'    # Weekly
-
-steps:
-  - run: |
-      python fetch_team_activity.py > /tmp/activity.json
-      sleep 1
-      python fetch_pr_stats.py > /tmp/prs.json
-  - agent:
-      model: claude-opus-4.6
-      prompt: |
-        Write a narrative team activity report from /tmp/activity.json and /tmp/prs.json.
-        DO NOT call the GitHub API — all data is pre-fetched.
-
-timeout-minutes: 60
-```
-
-**Key traits:** Opus model for narrative quality, pre-fetched data, 60-minute timeout.
-
-### Sub-archetype: Org Health Scan
-
-> Prefetch metrics → analyze → create issue
-
-```yaml
-on:
-  schedule:
-    - cron: '0 6 * * 1'
-
-steps:
-  - run: python fetch_org_metrics.py > /tmp/metrics.json
-  - agent:
-      prompt: |
-        Analyze org health metrics from /tmp/metrics.json.
-        Flag repos with declining activity or missing CI.
-
-timeout-minutes: 30
-```
-
-**Key traits:** Default model (metrics analysis is mechanical), 30-minute timeout.
-
-### Sub-archetype: Feedback Triage
-
-> Read issue → classify → add labels/comment
-
-```yaml
-on:
-  issues:
-    types: [opened]
-
-steps:
-  - agent:
-      prompt: |
-        Read this feedback issue. Classify as: [praise, bug, feature-request, confusion].
-        Add the appropriate label and respond with acknowledgment.
-
-timeout-minutes: 10
-```
-
-**Key traits:** Default model, stateless, fast — 10-minute timeout.
-
-### Sub-archetype: Compliance Checker
-
-> Scan repo → evaluate → create issue
-
-```yaml
-on:
-  schedule:
-    - cron: '0 8 * * 1-5'
-
-steps:
-  - run: |
-      python scan_repos_compliance.py > /tmp/compliance.json
-  - agent:
-      prompt: |
-        Review compliance scan results in /tmp/compliance.json.
-        Create an issue for each repo that fails checks.
-
-timeout-minutes: 30
-```
-
-**Key traits:** Default model, pre-fetched scan data, 30-minute timeout.
-
-### Sub-archetype: Sentiment Analysis
-
-> Prefetch discussions → analyze tone → create issue
-
-```yaml
-on:
-  schedule:
-    - cron: '0 10 * * 1'
-
-steps:
-  - run: python fetch_discussions.py > /tmp/discussions.json
-  - agent:
-      model: claude-opus-4.6
-      prompt: |
-        Analyze community sentiment from /tmp/discussions.json.
-        Identify concerning trends, frustrated users, or praise patterns.
-        Write a nuanced summary — tone matters more than counts.
-
-timeout-minutes: 45
-```
-
-**Key traits:** Opus model (nuance in sentiment detection), 45-minute timeout.
-
-### Sub-archetype: Data Pipeline
-
-> Prefetch → transform → write to file
-
-```yaml
-on:
-  schedule:
-    - cron: '0 5 * * *'
-
-steps:
-  - run: |
-      python fetch_raw_data.py > /tmp/raw.json
-      sleep 1
-      python transform_data.py /tmp/raw.json > /tmp/transformed.json
-  - agent:
-      prompt: |
-        Validate the transformed data in /tmp/transformed.json.
-        Check for anomalies, missing fields, or unexpected values.
-        Write a summary to /tmp/validation-report.md.
-
-timeout-minutes: 15
-```
-
-**Key traits:** Default model, mostly scripted pipeline with agent validation, 15–30 minute timeout.
-
----
-
-## Archetype Comparison: At a Glance
-
-| Aspect | Triage | CI Doctor | Improver | Report | Slash Cmd | Moderation | Pipeline | SRE |
-|--------|--------|-----------|----------|--------|-----------|------------|----------|-----|
-| **Trigger** | Issue | WF Run | Cron | Cron | Comment | Issue/PR | Dispatch | Cron |
-| **Model** | Default | Sonnet | Default | Default | Default | Codex-mini | Default | Opus |
-| **State** | None | Cache | Cache | Cache | Cache | None | Chained | Keyed |
-| **Max output** | 1 | 1 | 1 | 1 | 1 | 1 | Varies | 1 |
-| **stop-after** | — | — | +90d | +1y | — | — | — | +1y |
-| **Complexity** | ★★☆ | ★★★ | ★★☆ | ★★☆ | ★★☆ | ★☆☆ | ★★★ | ★★★★ |
-
----
-
-## Starter Templates
-
-Each archetype above includes a complete, copy-pasteable architecture block. To get started:
-
-1. **Identify your archetype** using the decision tree above
-2. **Copy the architecture block** from the relevant section
-3. **Customize** the prompt, labels, and safety settings for your repo
-4. **Test 3-5 times** before enabling in production
-5. **Add guardrails** based on what you observe in testing
-
-See also:
-- [Trigger Selection](./trigger-selection.md) — deep dive on trigger types
-- [Output Selection](./output-selection.md) — deep dive on output types
-- [State Management](./state-management.md) — deep dive on memory patterns
-- [Model Selection](./model-selection.md) — deep dive on model choices
-- [Prompt Structure](./prompt-structure.md) — deep dive on prompt writing
-- [Safety Configuration](./safety-configuration.md) — deep dive on safety settings
-- [Shared Components](./shared-components.md) — deep dive on reusable modules
-- [Data Ingestion](./data-ingestion.md) — deep dive on feeding data to workflows
+1. **Pick one archetype to start.** Don't combine them in a single workflow.
+2. **Issue Triage is the easiest to adopt** — 40 repos prove it works.
+3. **Daily Improver is the most popular** — 102 repos use some variant.
+4. **CI Doctor has the highest consistency** — all 16 use `workflow_run` trigger.
+5. **Name your workflow after the archetype** — `issue-triage`, `ci-doctor`, `daily-repo-status`. It signals intent to anyone reading your repo.
+6. **Build a suite, not a monolith** — `devantler-tech/ksail` runs 14 separate workflows, each with one job.
