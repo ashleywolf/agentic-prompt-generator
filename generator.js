@@ -102,12 +102,17 @@
   }
 
   function goToStep(n) {
-    // Hide current
-    document.getElementById('step-' + currentStep).classList.remove('active');
+    var direction = n > currentStep ? 'forward' : 'back';
+    var current = document.getElementById('step-' + currentStep);
+    current.classList.remove('active');
     // Update progress
     updateProgress(currentStep, n);
     currentStep = n;
-    document.getElementById('step-' + n).classList.add('active');
+    var next = document.getElementById('step-' + n);
+    next.style.animation = 'none';
+    next.offsetHeight; // reflow
+    next.style.animation = direction === 'forward' ? 'slideIn 0.3s ease' : 'slideInReverse 0.3s ease';
+    next.classList.add('active');
   }
 
   function updateProgress(from, to) {

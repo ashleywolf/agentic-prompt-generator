@@ -7,9 +7,16 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div class="gradient-bar"></div>
   <header class="site-header">
     <div class="container">
-      <h1>Agentic Prompt Generator</h1>
+      <div class="header-title">
+        <svg class="header-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L14.09 8.26L20 9.27L15.55 13.97L16.91 20L12 16.9L7.09 20L8.45 13.97L4 9.27L9.91 8.26L12 2Z" fill="url(#sparkle-grad)" opacity="0.9"/>
+          <defs><linearGradient id="sparkle-grad" x1="4" y1="2" x2="20" y2="20"><stop offset="0%" stop-color="#58a6ff"/><stop offset="100%" stop-color="#bc8cff"/></linearGradient></defs>
+        </svg>
+        <h1>Agentic Prompt Generator</h1>
+      </div>
       <p class="subtitle">Generate production-ready GitHub Copilot workflow prompts based on what actually works</p>
       <p class="stats" id="header-stats">Loading data…</p>
     </div>
@@ -51,9 +58,10 @@
     <section class="wizard-step active" id="step-1">
       <h2 class="step-title">What should this workflow do?</h2>
       <p class="step-description">Choose the type of agentic workflow you want to create.</p>
-      <div class="option-group" id="archetype-options">
+      <div class="option-group archetype-grid" id="archetype-options">
         <label class="option-card" data-value="issue-triage">
           <input type="radio" name="archetype" value="issue-triage">
+          <div class="archetype-icon">🏷️</div>
           <div class="option-info">
             <div class="option-label">Issue Triage <span class="badge-inline" id="badge-issue-triage"></span></div>
             <div class="option-desc">Classify and label new issues</div>
@@ -61,27 +69,31 @@
         </label>
         <label class="option-card" data-value="code-improvement">
           <input type="radio" name="archetype" value="code-improvement">
+          <div class="archetype-icon">🔧</div>
           <div class="option-info">
             <div class="option-label">Code Improvement <span class="badge-inline" id="badge-code-improvement"></span></div>
-            <div class="option-desc">Daily code quality improvements (tests, simplification, docs)</div>
+            <div class="option-desc">Daily code quality improvements</div>
           </div>
         </label>
         <label class="option-card" data-value="status-report">
           <input type="radio" name="archetype" value="status-report">
+          <div class="archetype-icon">📊</div>
           <div class="option-info">
             <div class="option-label">Status Report <span class="badge-inline" id="badge-status-report"></span></div>
-            <div class="option-desc">Generate periodic status/activity reports</div>
+            <div class="option-desc">Periodic status/activity reports</div>
           </div>
         </label>
         <label class="option-card" data-value="upstream-monitor">
           <input type="radio" name="archetype" value="upstream-monitor">
+          <div class="archetype-icon">🔭</div>
           <div class="option-info">
             <div class="option-label">Upstream Monitor <span class="badge-inline" id="badge-upstream-monitor"></span></div>
-            <div class="option-desc">Track upstream dependencies and sync changes</div>
+            <div class="option-desc">Track upstream deps and sync changes</div>
           </div>
         </label>
         <label class="option-card" data-value="dependency-monitor">
           <input type="radio" name="archetype" value="dependency-monitor">
+          <div class="archetype-icon">📦</div>
           <div class="option-info">
             <div class="option-label">Dependency Monitor <span class="badge-inline" id="badge-dependency-monitor"></span></div>
             <div class="option-desc">Track and update project dependencies</div>
@@ -89,13 +101,15 @@
         </label>
         <label class="option-card" data-value="pr-review">
           <input type="radio" name="archetype" value="pr-review">
+          <div class="archetype-icon">👀</div>
           <div class="option-info">
             <div class="option-label">PR Review <span class="badge-inline" id="badge-pr-review"></span></div>
-            <div class="option-desc">Review pull requests for quality and issues</div>
+            <div class="option-desc">Review PRs for quality and issues</div>
           </div>
         </label>
         <label class="option-card" data-value="documentation-updater">
           <input type="radio" name="archetype" value="documentation-updater">
+          <div class="archetype-icon">📝</div>
           <div class="option-info">
             <div class="option-label">Documentation Updater <span class="badge-inline" id="badge-documentation-updater"></span></div>
             <div class="option-desc">Keep docs accurate and up-to-date</div>
@@ -103,16 +117,18 @@
         </label>
         <label class="option-card" data-value="content-moderation">
           <input type="radio" name="archetype" value="content-moderation">
+          <div class="archetype-icon">🛡️</div>
           <div class="option-info">
             <div class="option-label">Content Moderation <span class="badge-inline" id="badge-content-moderation"></span></div>
             <div class="option-desc">Check PRs/issues for spam or policy violations</div>
           </div>
         </label>
-        <label class="option-card" data-value="custom">
+        <label class="option-card" data-value="custom" style="grid-column: 1 / -1;">
           <input type="radio" name="archetype" value="custom">
+          <div class="archetype-icon">⚡</div>
           <div class="option-info">
             <div class="option-label">Custom</div>
-            <div class="option-desc">Describe your own workflow</div>
+            <div class="option-desc">Describe your own workflow — start from scratch</div>
           </div>
         </label>
       </div>
@@ -282,7 +298,8 @@
 
   <footer class="site-footer">
     <div class="container">
-      Built from real-world analysis of GitHub Copilot agentic workflows.
+      Built from real-world analysis of GitHub Copilot agentic workflows.<br>
+      <a href="https://github.com/ashleywolf/agentic-prompt-generator">View source</a> · <a href="https://github.com/ashleywolf/agentic-prompt-generator/issues">Report an issue</a>
     </div>
   </footer>
 
