@@ -15,6 +15,13 @@
     </div>
   </header>
 
+  <!-- Data Insights Panel -->
+  <div class="insights-bar" id="insights-bar">
+    <div class="container">
+      <div class="insights-grid" id="insights-grid"></div>
+    </div>
+  </div>
+
   <main class="container">
     <!-- Progress bar -->
     <div class="progress-bar" id="progress-bar">
@@ -48,35 +55,56 @@
         <label class="option-card" data-value="issue-triage">
           <input type="radio" name="archetype" value="issue-triage">
           <div class="option-info">
-            <div class="option-label">Issue Triage</div>
+            <div class="option-label">Issue Triage <span class="badge-inline" id="badge-issue-triage"></span></div>
             <div class="option-desc">Classify and label new issues</div>
           </div>
         </label>
         <label class="option-card" data-value="code-improvement">
           <input type="radio" name="archetype" value="code-improvement">
           <div class="option-info">
-            <div class="option-label">Code Improvement</div>
+            <div class="option-label">Code Improvement <span class="badge-inline" id="badge-code-improvement"></span></div>
             <div class="option-desc">Daily code quality improvements (tests, simplification, docs)</div>
           </div>
         </label>
         <label class="option-card" data-value="status-report">
           <input type="radio" name="archetype" value="status-report">
           <div class="option-info">
-            <div class="option-label">Status Report</div>
+            <div class="option-label">Status Report <span class="badge-inline" id="badge-status-report"></span></div>
             <div class="option-desc">Generate periodic status/activity reports</div>
+          </div>
+        </label>
+        <label class="option-card" data-value="upstream-monitor">
+          <input type="radio" name="archetype" value="upstream-monitor">
+          <div class="option-info">
+            <div class="option-label">Upstream Monitor <span class="badge-inline" id="badge-upstream-monitor"></span></div>
+            <div class="option-desc">Track upstream dependencies and sync changes</div>
           </div>
         </label>
         <label class="option-card" data-value="dependency-monitor">
           <input type="radio" name="archetype" value="dependency-monitor">
           <div class="option-info">
-            <div class="option-label">Dependency Monitor</div>
-            <div class="option-desc">Track upstream changes and sync</div>
+            <div class="option-label">Dependency Monitor <span class="badge-inline" id="badge-dependency-monitor"></span></div>
+            <div class="option-desc">Track and update project dependencies</div>
+          </div>
+        </label>
+        <label class="option-card" data-value="pr-review">
+          <input type="radio" name="archetype" value="pr-review">
+          <div class="option-info">
+            <div class="option-label">PR Review <span class="badge-inline" id="badge-pr-review"></span></div>
+            <div class="option-desc">Review pull requests for quality and issues</div>
+          </div>
+        </label>
+        <label class="option-card" data-value="documentation-updater">
+          <input type="radio" name="archetype" value="documentation-updater">
+          <div class="option-info">
+            <div class="option-label">Documentation Updater <span class="badge-inline" id="badge-documentation-updater"></span></div>
+            <div class="option-desc">Keep docs accurate and up-to-date</div>
           </div>
         </label>
         <label class="option-card" data-value="content-moderation">
           <input type="radio" name="archetype" value="content-moderation">
           <div class="option-info">
-            <div class="option-label">Content Moderation</div>
+            <div class="option-label">Content Moderation <span class="badge-inline" id="badge-content-moderation"></span></div>
             <div class="option-desc">Check PRs/issues for spam or policy violations</div>
           </div>
         </label>
@@ -146,6 +174,7 @@
           </div>
         </label>
       </div>
+      <div class="trigger-warnings-panel" id="trigger-warnings"></div>
       <div class="step-nav">
         <button class="btn btn-secondary" id="prev-2">← Back</button>
         <button class="btn btn-primary" id="next-2" disabled>Next →</button>

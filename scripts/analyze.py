@@ -50,13 +50,19 @@ def classify_workflow(wf):
     name = (wf.get("name", "") + " " + wf.get("file", "")).lower()
     if "triage" in name or "label" in name:
         return "issue-triage"
+    if "upstream" in name or "sync" in name or "monitor" in name:
+        return "upstream-monitor"
+    if "doc" in name and ("updat" in name or "improv" in name or "generat" in name or "clean" in name):
+        return "documentation-updater"
+    if "review" in name or "pr-review" in name or "pr-check" in name:
+        return "pr-review"
     if "fix" in name or "doctor" in name or "ci" in name or "code" in name:
         return "code-improvement"
     if "report" in name or "summary" in name or "weekly" in name or "status" in name:
         return "status-report"
     if "depend" in name or "update" in name or "renovate" in name:
         return "dependency-monitor"
-    if "moderat" in name or "review" in name or "content" in name:
+    if "moderat" in name or "content" in name:
         return "content-moderation"
     return "custom"
 
@@ -86,24 +92,30 @@ def fetch_failed_logs(repo, run_id):
     return None
 
 
+ERROR_PATTERNS = {
+    "safe_output_denied": r"safe.?output|output.*denied|not allowed.*write|permission.*output",
+    "auth_error": r"401|403|authentication|authorization|SAML|permission denied|Resource not accessible",
+    "not_found": r"404|not found|does not exist|no such",
+    "mcp_error": r"MCP.*error|MCP.*fail|tool.*error|tool call failed",
+    "timeout": r"timed? ?out|deadline exceeded|execution time|Job was cancelled",
+    "rate_limit": r"rate limit|API rate|secondary rate|abuse detection|429",
+    "payload_too_large": r"payload was too large|exceeds.*threshold|response too large",
+    "token_limit": r"token limit|context.*too long|max.*tokens|context window",
+    "network_error": r"ECONNREFUSED|ENOTFOUND|DNS|network.*error|connection.*refused|fetch failed",
+    "empty_results": r"total_count.*:.*0|no results found|0 items|empty response",
+    "agent_stuck": r"no progress|stuck|loop detected|repeated.*same|identical.*response",
+}
+
+
 def categorize_log(log_text):
-    """Categorize a log into failure types."""
+    """Categorize a log into all matching failure types."""
     if not log_text:
-        return "unknown"
-    text = log_text.lower()
-    if "timeout" in text or "timed out" in text or "deadline exceeded" in text:
-        return "timeout"
-    if "rate limit" in text or "rate_limit" in text or "429" in text or "secondary rate" in text:
-        return "rate_limit"
-    if "safe" in text and ("output" in text or "denied" in text or "not allowed" in text):
-        return "safe_output_denied"
-    if "401" in text or "403" in text or "unauthorized" in text or "permission" in text:
-        return "auth_error"
-    if "not found" in text or "404" in text:
-        return "not_found"
-    if "error" in text or "exception" in text or "traceback" in text or "failed" in text:
-        return "crash"
-    return "unknown"
+        return ["unknown"]
+    categories = []
+    for name, pattern in ERROR_PATTERNS.items():
+        if re.search(pattern, log_text, re.IGNORECASE):
+            categories.append(name)
+    return categories if categories else ["unknown"]
 
 
 # ── Main Analysis ───────────────────────────────────────────────────
@@ -387,13 +399,15 @@ def main():
                 sys.stdout.flush()
 
             log_text = fetch_failed_logs(fr["repo"], fr["run_id"])
-            category = categorize_log(log_text)
-            failure_categories[category] += 1
-            failure_by_archetype[fr["archetype"]][category] += 1
+            categories = categorize_log(log_text)
+            for category in categories:
+                failure_categories[category] += 1
+                failure_by_archetype[fr["archetype"]][category] += 1
 
             # Keep a few samples per category
-            if log_text and len(log_samples[category]) < 3:
-                log_samples[category].append({
+            primary = categories[0]
+            if log_text and len(log_samples[primary]) < 3:
+                log_samples[primary].append({
                     "repo": fr["repo"],
                     "workflow": fr["workflow"],
                     "snippet": log_text[-500:]

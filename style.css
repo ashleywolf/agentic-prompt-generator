@@ -479,6 +479,101 @@ a:hover {
   font-size: 0.82rem;
 }
 
+/* Insights bar */
+.insights-bar {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 2rem;
+}
+.insights-grid {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.insight-item {
+  text-align: center;
+  min-width: 100px;
+}
+.insight-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent-blue);
+}
+.insight-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.insight-detail {
+  font-size: 0.7rem;
+  color: var(--success);
+  margin-top: 1px;
+}
+.insight-item.insight-warn .insight-value {
+  color: var(--warning);
+}
+.insight-item.insight-warn .insight-label {
+  color: var(--warning);
+  font-weight: 600;
+}
+
+/* Inline success badges on archetype cards */
+.badge-inline {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.badge-high {
+  background: rgba(63, 185, 80, 0.15);
+  color: var(--success);
+}
+.badge-medium {
+  background: rgba(210, 153, 34, 0.15);
+  color: var(--warning);
+}
+.badge-low {
+  background: rgba(248, 81, 73, 0.15);
+  color: var(--danger);
+}
+
+/* Trigger warnings */
+.trigger-warnings-panel {
+  margin-top: 0.75rem;
+}
+.trigger-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  margin-bottom: 0.4rem;
+}
+.trigger-warning.success {
+  background: rgba(63, 185, 80, 0.08);
+  border: 1px solid rgba(63, 185, 80, 0.2);
+  color: var(--success);
+}
+.trigger-warning.warn {
+  background: rgba(210, 153, 34, 0.08);
+  border: 1px solid rgba(210, 153, 34, 0.2);
+  color: var(--warning);
+}
+.trigger-warning.danger {
+  background: rgba(248, 81, 73, 0.08);
+  border: 1px solid rgba(248, 81, 73, 0.2);
+  color: var(--danger);
+}
+.trigger-warning.info {
+  background: rgba(88, 166, 255, 0.08);
+  border: 1px solid rgba(88, 166, 255, 0.2);
+  color: var(--accent-blue);
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .site-header { padding: 2rem 0 1.5rem; }

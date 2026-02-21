@@ -258,13 +258,17 @@ for i, (name, info) in enumerate(sorted(repos.items())):
                 # Extract frontmatter patterns
                 wf = {"name": md_file.replace(".md", ""), "file": md_file}
                 
-                # Engine
-                m = re.search(r'engine:\s*(\S+)', content)
-                if m: wf["engine"] = m.group(1)
+                # Engine — must be in frontmatter and have a valid value
+                fm_match = re.match(r'^---\s*\n(.*?)\n---', content, re.DOTALL)
+                fm_text = fm_match.group(1) if fm_match else ""
+                m = re.search(r'^engine:\s*(\S+)', fm_text, re.MULTILINE)
+                if m and m.group(1) not in ('id:', 'model:', '{', '|', '>'):
+                    wf["engine"] = m.group(1)
                 
                 # Model
-                m = re.search(r'model:\s*(\S+)', content)
-                if m: wf["model"] = m.group(1)
+                m = re.search(r'^model:\s*(\S+)', fm_text, re.MULTILINE)
+                if m and m.group(1) not in ('{', '|', '>', '```'):
+                    wf["model"] = m.group(1)
                 
                 # Trigger
                 triggers = re.findall(r'on:\s*\n((?:\s+\w+.*\n)*)', content)

@@ -21,10 +21,52 @@
         var m = data.metadata;
         document.getElementById('header-stats').innerHTML =
           'Built from scanning <strong>' + m.source_repos + '</strong> public repos with <strong>' + m.active_workflows + '</strong> active workflows';
+        populateInsights(data);
+        populateBadges(data);
       })
       .catch(function () {
         document.getElementById('header-stats').textContent = 'Patterns data unavailable';
       });
+  }
+
+  function populateInsights(data) {
+    var grid = document.getElementById('insights-grid');
+    if (!grid) return;
+    var m = data.metadata;
+    var findings = data.research_findings || {};
+
+    var items = [
+      { label: 'Repos scanned', value: m.source_repos || '—' },
+      { label: 'Active workflows', value: m.active_workflows || '—' },
+      { label: 'Total workflows', value: m.total_workflows || '—' },
+      { label: 'Best trigger combo', value: 'schedule + dispatch', detail: '80% success' },
+    ];
+
+    var html = '';
+    items.forEach(function (item) {
+      html += '<div class="insight-item"><div class="insight-value">' + item.value + '</div>' +
+        '<div class="insight-label">' + item.label + '</div>' +
+        (item.detail ? '<div class="insight-detail">' + item.detail + '</div>' : '') + '</div>';
+    });
+
+    // Key warnings
+    if (findings.slash_command_broken) {
+      html += '<div class="insight-item insight-warn"><div class="insight-value">⚠</div>' +
+        '<div class="insight-label">slash_command: 0% success</div></div>';
+    }
+    grid.innerHTML = html;
+  }
+
+  function populateBadges(data) {
+    if (!data.archetypes) return;
+    data.archetypes.forEach(function (arch) {
+      var el = document.getElementById('badge-' + arch.id);
+      if (!el) return;
+      var rate = Math.round(arch.success_rate * 100);
+      var level = rate >= 70 ? 'high' : (rate >= 50 ? 'medium' : 'low');
+      el.className = 'badge-inline badge-' + level;
+      el.textContent = rate + '% · ' + arch.count + ' repos';
+    });
   }
 
   function getArchetype(id) {
@@ -103,6 +145,7 @@
       cb.addEventListener('change', function () {
         updateCardSelection('#trigger-options', 'checkbox');
         document.getElementById('next-2').disabled = !hasChecked('trigger');
+        showTriggerWarnings();
       });
     });
 
@@ -134,6 +177,52 @@
 
   function hasChecked(name) {
     return document.querySelectorAll('input[name="' + name + '"]:checked').length > 0;
+  }
+
+  function showTriggerWarnings() {
+    var panel = document.getElementById('trigger-warnings');
+    if (!panel || !patterns || !patterns.trigger_combos) return;
+
+    var selected = [];
+    document.querySelectorAll('input[name="trigger"]:checked').forEach(function (cb) {
+      selected.push(cb.value);
+    });
+    if (selected.length === 0) { panel.innerHTML = ''; return; }
+
+    var combo = selected.slice().sort().join('+');
+    var html = '';
+
+    // Check for slash_command warning
+    if (selected.indexOf('issue_comment') !== -1) {
+      html += '<div class="trigger-warning danger">⚠ Slash commands (issue_comment) have 0-2% success rate. Consider using workflow_dispatch instead.</div>';
+    }
+
+    // Check combo against known data
+    var match = null;
+    for (var i = 0; i < patterns.trigger_combos.length; i++) {
+      if (patterns.trigger_combos[i].combo === combo) {
+        match = patterns.trigger_combos[i];
+        break;
+      }
+    }
+
+    if (match) {
+      var rate = Math.round(match.success_rate * 100);
+      if (match.risk === 'low') {
+        html += '<div class="trigger-warning success">✓ ' + combo + ' has ' + rate + '% success rate across ' + match.count + ' runs</div>';
+      } else if (match.risk === 'medium') {
+        html += '<div class="trigger-warning warn">~ ' + combo + ' has ' + rate + '% success rate — consider simplifying triggers</div>';
+      } else {
+        html += '<div class="trigger-warning danger">✗ ' + combo + ' has ' + rate + '% success rate — this combination frequently fails</div>';
+      }
+    }
+
+    // Suggest workflow_dispatch if not selected
+    if (selected.indexOf('workflow_dispatch') === -1 && selected.length > 0) {
+      html += '<div class="trigger-warning info">💡 Adding manual dispatch (workflow_dispatch) improves success rate by ~21 percentage points</div>';
+    }
+
+    panel.innerHTML = html;
   }
 
   function prefillFromArchetype(id) {
@@ -171,7 +260,7 @@
     document.getElementById('next-3').disabled = !hasChecked('output');
 
     // Pre-select data need
-    var needsData = (id === 'dependency-monitor' || id === 'status-report') ? 'yes' : 'no';
+    var needsData = (id === 'dependency-monitor' || id === 'status-report' || id === 'upstream-monitor') ? 'yes' : 'no';
     var dataRadio = document.querySelector('input[name="needs-data"][value="' + needsData + '"]');
     if (dataRadio) {
       dataRadio.checked = true;
@@ -286,6 +375,15 @@
       case 'content-moderation':
         body = buildContentModeration(answers, label);
         break;
+      case 'upstream-monitor':
+        body = buildUpstreamMonitor(answers, label);
+        break;
+      case 'documentation-updater':
+        body = buildDocumentationUpdater(answers, label);
+        break;
+      case 'pr-review':
+        body = buildPrReview(answers, label);
+        break;
       default:
         body = buildCustom(answers, label);
     }
@@ -318,10 +416,38 @@
   function preStepsBlock(answers) {
     if (!answers.needsData) return '';
     var desc = answers.dataDescription || 'the required external data';
-    return '## Pre-steps\n\nBefore starting, gather the following information:\n\n' +
-      '1. **Fetch external data**: ' + desc + '\n' +
-      '2. **Validate** that the fetched data is complete and well-formed\n' +
-      '3. **Store** the results for use in the steps below\n\n';
+    var archetype = answers.archetype;
+    var block = '## Pre-steps\n\n';
+
+    // Archetype-specific pre-step guidance
+    if (archetype === 'status-report') {
+      block += 'Before starting, pre-fetch all data sources in a `steps:` block. This is the #1 predictor of workflow health.\n\n' +
+        '```yaml\nsteps:\n  - name: Fetch activity data\n    run: |\n      gh api graphql ... > /tmp/activity.json\n    env:\n      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n```\n\n' +
+        '1. **Fetch** ' + desc + '\n' +
+        '2. **Validate** that the data is complete — check for empty arrays or missing fields\n' +
+        '3. **Read** the pre-fetched JSON files from `/tmp/` instead of making API calls at runtime\n\n';
+    } else if (archetype === 'dependency-monitor' || archetype === 'upstream-monitor') {
+      block += 'Pre-fetch dependency/release data before analysis:\n\n' +
+        '1. **Check** upstream repos or package registries for new versions\n' +
+        '2. **Compare** against current versions in your project\n' +
+        '3. **Prepare** a diff of what changed\n\n';
+    } else if (archetype === 'code-improvement') {
+      block += 'Run validation before the agent starts making changes:\n\n' +
+        '1. **Run tests** to establish baseline — know what already passes\n' +
+        '2. **Run linter** to identify existing issues vs new ones\n' +
+        '3. **Collect** ' + desc + '\n\n';
+    } else if (archetype === 'documentation-updater') {
+      block += 'Validate docs build before making changes:\n\n' +
+        '1. **Build docs** to confirm the current state compiles\n' +
+        '2. **Identify** outdated or missing sections\n' +
+        '3. **Fetch** ' + desc + '\n\n';
+    } else {
+      block += 'Before starting, gather the following:\n\n' +
+        '1. **Fetch** ' + desc + '\n' +
+        '2. **Validate** that the fetched data is complete and well-formed\n' +
+        '3. **Store** the results for use in the steps below\n\n';
+    }
+    return block;
   }
 
   function buildIssueTriage(answers, label) {
@@ -476,11 +602,91 @@
       '- **If spam**: Apply `spam` label and comment explaining why it was flagged\n' +
       '- **If policy violation**: Apply `policy-violation` label and comment with a link to the code of conduct\n' +
       '- **If legitimate**: Do nothing — no comment, no label\n\n' +
-      '## Rules\n\n' +
-      '- **Never** close or lock an issue/PR. Only label and comment.\n' +
+      '## Constraints\n\n' +
+      '- **DO NOT** close or lock any issue or PR. Only label and comment.\n' +
+      '- **DO NOT** flag content just because it is in a non-English language.\n' +
       '- When in doubt, err on the side of legitimate. False positives are worse than false negatives.\n' +
       '- Be factual in your comments. Do not be accusatory.\n' +
       '- Include specific evidence for why content was flagged.\n';
+  }
+
+  function buildUpstreamMonitor(answers, label) {
+    return '# ' + label + '\n\n' +
+      'You are an **upstream dependency monitor** for this repository.\n\n' +
+      'Your job is to check upstream repositories or packages for new releases, breaking changes, or important updates, and report findings.\n\n' +
+      preStepsBlock(answers) +
+      '## Instructions\n\n' +
+      '1. **Identify** the upstream dependencies to check (listed below or in package files)\n' +
+      '2. **Check** for new releases, tags, or significant commits since the last check\n' +
+      '3. **Compare** upstream changes against the current state of this project\n' +
+      '4. **Report** findings by creating an issue with a summary\n\n' +
+      '## What to Monitor\n\n' +
+      '- New stable releases or version tags\n' +
+      '- Breaking changes or deprecation notices\n' +
+      '- Security advisories affecting tracked packages\n' +
+      '- API changes that may require updates in this project\n\n' +
+      '## Output Format\n\n' +
+      'Create an issue titled `[Upstream] Updates detected — YYYY-MM-DD` with:\n' +
+      '- A table of dependencies checked and their status\n' +
+      '- Details of any new releases or breaking changes\n' +
+      '- Recommended actions for the team\n\n' +
+      '## Constraints\n\n' +
+      '- **DO NOT** automatically create PRs or merge changes — report only.\n' +
+      '- **DO NOT** report on dependencies that have not changed.\n' +
+      '- If no updates are found, do not create an issue.\n' +
+      '- Include links to upstream changelogs or release notes when available.\n';
+  }
+
+  function buildDocumentationUpdater(answers, label) {
+    return '# ' + label + '\n\n' +
+      'You are a **documentation maintenance agent** for this repository.\n\n' +
+      'Your job is to keep documentation accurate, up-to-date, and consistent with the codebase.\n\n' +
+      preStepsBlock(answers) +
+      '## Instructions\n\n' +
+      '1. **Scan** documentation files (README, docs/, wiki) for outdated content\n' +
+      '2. **Compare** documentation against the current code and API surface\n' +
+      '3. **Fix** inaccuracies, broken links, and outdated examples\n' +
+      '4. **Open** a pull request with the improvements\n\n' +
+      '## What to Update\n\n' +
+      '- Code examples that no longer match the current API\n' +
+      '- Broken links to external resources\n' +
+      '- Outdated version numbers or dependency references\n' +
+      '- Missing documentation for new public APIs or features\n' +
+      '- Typos and formatting inconsistencies\n\n' +
+      '## Constraints\n\n' +
+      '- **DO NOT** delete existing documentation sections — update or flag for review.\n' +
+      '- **DO NOT** change the tone, voice, or writing style of existing docs.\n' +
+      '- **DO NOT** document internal or private APIs unless they are already documented.\n' +
+      '- Make one focused PR per documentation area. Do not combine unrelated changes.\n' +
+      '- Keep changes factual — do not add marketing language or opinions.\n';
+  }
+
+  function buildPrReview(answers, label) {
+    return '# ' + label + '\n\n' +
+      'You are a **pull request reviewer** for this repository.\n\n' +
+      'Your job is to review opened pull requests for code quality, potential bugs, and adherence to project standards.\n\n' +
+      preStepsBlock(answers) +
+      '## Instructions\n\n' +
+      '1. **Read** the PR diff, title, and description\n' +
+      '2. **Analyze** the changes for issues listed below\n' +
+      '3. **Comment** with specific, actionable feedback on problematic lines\n' +
+      '4. **Summarize** your overall assessment as a PR comment\n\n' +
+      '## Review Criteria\n\n' +
+      '### Check for:\n' +
+      '- Security vulnerabilities (SQL injection, XSS, hardcoded secrets, unsafe deserialization)\n' +
+      '- Logic errors or off-by-one bugs\n' +
+      '- Missing error handling for fallible operations\n' +
+      '- Performance issues (N+1 queries, unbounded loops, memory leaks)\n' +
+      '- Breaking changes to public APIs without version bumps\n\n' +
+      '### Ignore:\n' +
+      '- Style preferences (formatting, naming conventions) — the linter handles these\n' +
+      '- Minor refactoring suggestions that don\'t affect correctness\n' +
+      '- Test coverage gaps (unless a critical path is completely untested)\n\n' +
+      '## Constraints\n\n' +
+      '- **DO NOT** approve or request changes — only leave comments.\n' +
+      '- **DO NOT** comment on files you are uncertain about. Only flag issues you are confident in.\n' +
+      '- Be specific — reference line numbers and explain why something is a problem.\n' +
+      '- If the PR looks clean, say so briefly. Do not manufacture issues.\n';
   }
 
   function buildCustom(answers, label) {
