@@ -336,7 +336,21 @@
         body = buildCustom(answers, label);
     }
 
-    return fm + body;
+    // Append tips as best practices section
+    var tipsSection = buildTipsSection(answers.archetype);
+
+    return fm + body + tipsSection;
+  }
+
+  function buildTipsSection(archetypeId) {
+    var arch = getArchetype(archetypeId);
+    if (!arch || !arch.tips || !arch.tips.length) return '';
+
+    var section = '\n## Best Practices\n\n';
+    arch.tips.forEach(function (tip) {
+      section += '- ' + tip + '\n';
+    });
+    return section;
   }
 
   function buildTriggerYaml(triggers) {
@@ -400,6 +414,16 @@
       prompt += '- External data needed: ' + answers.dataDescription + '\n';
       prompt += '- Add a pre-step to fetch this data before the agent runs\n';
     }
+
+    // Include tips as guidance
+    var arch = getArchetype(answers.archetype);
+    if (arch && arch.tips && arch.tips.length) {
+      prompt += '\nBest practices to follow:\n';
+      arch.tips.forEach(function (tip) {
+        prompt += '- ' + tip + '\n';
+      });
+    }
+
     prompt += '\nThe workflow should be saved to .github/workflows/' + name + '.md';
     return prompt;
   }
