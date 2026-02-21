@@ -3,7 +3,32 @@
     "generated_at": "2026-02-21T06:22:55.600858Z",
     "source_repos": 269,
     "active_workflows": 246,
-    "total_workflows": 679
+    "total_workflows": 679,
+    "unique_after_dedup": 514,
+    "template_clones_removed": 179,
+    "template_families": 45,
+    "total_run_records": 4888,
+    "run_date_range": "2025-07 to 2026-02",
+    "methodology": "Template-deduplicated. Statistical tests: Mann-Whitney U, chi-squared with odds ratios, multivariate logistic regression. Min sample n=20.",
+    "template_dedup": {
+      "total_clones": 179,
+      "template_families": 45,
+      "unique_prompts": 514,
+      "largest_families": [
+        {
+          "name": "daily-repo-status",
+          "copies": 57
+        },
+        {
+          "name": "issue-triage",
+          "copies": 18
+        },
+        {
+          "name": "ci-doctor",
+          "copies": 16
+        }
+      ]
+    }
   },
   "archetypes": [
     {
@@ -414,6 +439,18 @@
       "success_rate": null,
       "repos_seen": null,
       "reason": "If you cannot describe the job in one sentence, split it"
+    },
+    {
+      "pattern": "slash_command trigger",
+      "success_rate": 0.01,
+      "repos_seen": 12,
+      "reason": "0-2% success across all combos including slash_command. Platform not yet stable for this trigger type."
+    },
+    {
+      "pattern": "workflow_run chaining",
+      "success_rate": 0.13,
+      "repos_seen": 11,
+      "reason": "13% success rate. Use pre-steps or schedule instead of chaining workflows."
     }
   ],
   "config_defaults": {
@@ -432,5 +469,229 @@
       3000,
       8000
     ]
-  }
+  },
+  "trigger_combos": [
+    {
+      "combo": "schedule+workflow_dispatch",
+      "success_rate": 0.8,
+      "count": 76,
+      "risk": "low",
+      "recommendation": "Best general-purpose combo"
+    },
+    {
+      "combo": "issues+schedule+workflow_dispatch",
+      "success_rate": 0.75,
+      "count": 202,
+      "risk": "low",
+      "recommendation": "Best for issue-driven workflows"
+    },
+    {
+      "combo": "discussion+issues+schedule+workflow_dispatch",
+      "success_rate": 0.79,
+      "count": 24,
+      "risk": "low",
+      "recommendation": "Good for discussion-heavy repos"
+    },
+    {
+      "combo": "push+workflow_dispatch",
+      "success_rate": 0.75,
+      "count": 14,
+      "risk": "low",
+      "recommendation": "Good for CI-adjacent tasks"
+    },
+    {
+      "combo": "issues+schedule",
+      "success_rate": 0.73,
+      "count": 30,
+      "risk": "low",
+      "recommendation": "Decent but adding workflow_dispatch improves it"
+    },
+    {
+      "combo": "issues+workflow_dispatch",
+      "success_rate": 0.62,
+      "count": 39,
+      "risk": "medium",
+      "recommendation": "Missing schedule hurts reliability"
+    },
+    {
+      "combo": "issues",
+      "success_rate": 0.57,
+      "count": 38,
+      "risk": "medium",
+      "recommendation": "Add workflow_dispatch for manual re-runs"
+    },
+    {
+      "combo": "pull_request",
+      "success_rate": 0.51,
+      "count": 29,
+      "risk": "high",
+      "recommendation": "Coin-flip reliability \u2014 scope narrowly"
+    },
+    {
+      "combo": "workflow_run",
+      "success_rate": 0.13,
+      "count": 11,
+      "risk": "critical",
+      "recommendation": "Avoid \u2014 use pre-steps or schedule instead"
+    }
+  ],
+  "research_findings": {
+    "bimodal_distribution": {
+      "finding": "Success rates are bimodal \u2014 38% always succeed, 21% always fail, 41% mixed",
+      "implication": "Mean success rate (64%) is misleading. Most workflows either work perfectly or are completely broken."
+    },
+    "significant_features": [
+      {
+        "feature": "do_not_constraints",
+        "test": "chi-squared (bivariate, deduplicated)",
+        "p_value": 0.009,
+        "odds_ratio": 1.61,
+        "finding": "Workflows with DO NOT instructions are 61% more likely to be healthy",
+        "caveat": "Does not survive multivariate control (p=0.821) \u2014 likely confounded by prompt complexity"
+      }
+    ],
+    "non_significant_features": [
+      {
+        "feature": "rate_limit_awareness",
+        "raw_delta": "+11%",
+        "dedup_delta": "+1%",
+        "p_value": 0.059,
+        "verdict": "Template clone artifact"
+      },
+      {
+        "feature": "error_handling",
+        "raw_delta": "-3%",
+        "dedup_delta": "+0%",
+        "p_value": 0.251,
+        "verdict": "Not significant"
+      },
+      {
+        "feature": "code_examples",
+        "raw_delta": "+1%",
+        "dedup_delta": "+5%",
+        "p_value": 0.981,
+        "verdict": "Not significant"
+      },
+      {
+        "feature": "format_spec",
+        "raw_delta": "-2%",
+        "dedup_delta": "+3%",
+        "p_value": 0.238,
+        "verdict": "Not significant"
+      },
+      {
+        "feature": "numbered_steps",
+        "raw_delta": "-5%",
+        "dedup_delta": "-4%",
+        "p_value": 0.41,
+        "verdict": "Not significant"
+      },
+      {
+        "feature": "pre_steps",
+        "raw_delta": "-3%",
+        "dedup_delta": "-2%",
+        "p_value": 0.503,
+        "verdict": "Not significant"
+      }
+    ],
+    "multivariate_regression": {
+      "finding": "No prompt content feature survives multivariate logistic regression (all p > 0.3)",
+      "implication": "Trigger combination and structural config drive success, not prompt wording"
+    },
+    "temporal": {
+      "adoption_explosion": "563 new workflows in Feb 2026 (86% of all tracked)",
+      "degraded_workflows": 14,
+      "degraded_pct": "2.1%",
+      "failure_duration": {
+        "success_median_min": 4.7,
+        "failure_median_min": 1.4,
+        "p_value": 0.0
+      },
+      "finding": "Failures crash early (2\u00d7 shorter). 14 workflows degraded from healthy to failing over time."
+    },
+    "engine_performance": [
+      {
+        "engine": "default/unknown",
+        "success_rate": 0.67,
+        "count": 352
+      },
+      {
+        "engine": "claude",
+        "success_rate": 0.64,
+        "count": 59
+      },
+      {
+        "engine": "copilot",
+        "success_rate": 0.62,
+        "count": 202
+      },
+      {
+        "engine": "codex",
+        "success_rate": 0.47,
+        "count": 22
+      }
+    ],
+    "repo_maturity_effect": {
+      "finding": "No effect \u2014 production (64%), hobby (65%), and test (64%) repos all perform the same",
+      "implication": "Repo quality doesn't predict workflow success; prompt and config do"
+    }
+  },
+  "degraded_workflows": [
+    {
+      "repo": "github/gh-aw",
+      "workflow": "issue-triage-agent",
+      "early_rate": 1.0,
+      "recent_rate": 0.0,
+      "runs": 10
+    },
+    {
+      "repo": "github/gh-aw",
+      "workflow": "ai-moderator",
+      "early_rate": 1.0,
+      "recent_rate": 0.2,
+      "runs": 10
+    },
+    {
+      "repo": "github/gh-aw",
+      "workflow": "daily-copilot-token-report",
+      "early_rate": 0.8,
+      "recent_rate": 0.4,
+      "runs": 10
+    },
+    {
+      "repo": "github/gh-aw",
+      "workflow": "dev",
+      "early_rate": 0.8,
+      "recent_rate": 0.4,
+      "runs": 10
+    },
+    {
+      "repo": "elastic/opentelemetry-collector-components",
+      "workflow": "pr-review",
+      "early_rate": 0.8,
+      "recent_rate": 0.2,
+      "runs": 10
+    },
+    {
+      "repo": "llm-d-incubation/llm-d-async",
+      "workflow": "typo-checker",
+      "early_rate": 0.8,
+      "recent_rate": 0.0,
+      "runs": 10
+    },
+    {
+      "repo": "adrianmg/test-repo",
+      "workflow": "issue-triage",
+      "early_rate": 1.0,
+      "recent_rate": 0.2,
+      "runs": 10
+    },
+    {
+      "repo": "adrianmg/test-repo",
+      "workflow": "dad-jokes",
+      "early_rate": 1.0,
+      "recent_rate": 0.2,
+      "runs": 10
+    }
+  ]
 }

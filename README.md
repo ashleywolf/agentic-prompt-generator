@@ -12,19 +12,32 @@ Generate production-ready GitHub Copilot agentic workflow `.md` prompts — no g
 
 ## Data
 
-The generator is powered by scanning **272 public repos** running **679 real agentic workflows** in production. Every template and default is grounded in what actually works. See [DISCOVERY.md](DISCOVERY.md) for the full scanning methodology.
+The generator is powered by scanning **269 public repos** running **679 real agentic workflows** (514 unique after template deduplication). Every template and default is grounded in what actually works — validated with statistical significance testing, not just raw averages. See [DISCOVERY.md](DISCOVERY.md) for scanning methodology and the [research issue](https://github.com/github/ospo-aw/issues/885) for the full hardened analysis.
 
 ## Key insights
 
-From analyzing 4,888 production workflow runs across 269 public repos:
+From analyzing 4,888 runs across 679 workflows (514 unique after template deduplication), statistically validated with Mann-Whitney U tests, chi-squared, and multivariate logistic regression:
 
-- **Trigger configuration is the #1 predictor** — adding `workflow_dispatch` improves success by ~21 percentage points. Adding `schedule` adds ~20pp.
+### What actually predicts success
+
+- **Trigger combination is the #1 predictor.** `schedule` + `workflow_dispatch` = 80% success. `issues` + `schedule` + `workflow_dispatch` = 75%. Adding `workflow_dispatch` alone adds ~21pp.
 - **`slash_command` triggers are broken** — 0-2% success rate across all combos. Avoid until the platform stabilizes.
-- **`workflow_run` chaining fails** — 16% success rate. Use pre-steps or schedule instead.
-- **Issue triage is the most reliable archetype** — ~72% success rate, making it the safest starting point.
-- **Prompt sweet spot is 3–8 KB** — too short and the agent lacks context; too long and it loses focus.
+- **`workflow_run` chaining fails** — 13% success rate. Use pre-steps or schedule instead.
+- **DO NOT constraints help** — the only prompt feature reaching statistical significance (p=0.009, odds ratio 1.61). Workflows with explicit "DO NOT" instructions are 61% more likely to be healthy.
+- **Engine matters** — default engine: 67%, Claude: 64%, Copilot: 62%, Codex: 47%.
+
+### What doesn't predict success
+
+- **Prompt content features have no measurable impact.** Error handling, rate limit awareness, code examples, format specs, numbered steps — none survive statistical testing (all p > 0.05). Include them for readability, not reliability.
+- **Repo maturity doesn't matter** — production (64%), hobby (65%), and test (64%) repos all perform the same.
+
+### Other findings
+
+- **Success rates are bimodal** — 38% of workflows always succeed, 21% always fail, 41% are mixed. The "64% average" hides this.
+- **Failures crash early** — failed runs are 2× shorter than successes (median 1.4 min vs 4.7 min, p<0.001).
+- **2.1% of workflows degrade over time** — 14 workflows that started healthy are now failing.
 - **Avoid `pr-fix` and `ci-doctor` templates** — both have <20% success rates in practice.
-- **Model selection is flexible** — most workflows use the default engine, and changing the model hasn't shown significant differences in success rates across public repos.
+- **32% of workflows are template clones** — 179 copies of ~15 starter templates. Adapt, don't just copy.
 
 ## Self-updating
 
