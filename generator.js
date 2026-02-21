@@ -4,6 +4,8 @@
   let patterns = null;
   let currentStep = 1;
   let generatedMd = '';
+  let generatedPrompt = '';
+  let currentFormat = 'workflow';
 
   // ── Bootstrap ──────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function () {
@@ -45,6 +47,18 @@
 
     document.getElementById('btn-copy').addEventListener('click', copyToClipboard);
     document.getElementById('btn-download').addEventListener('click', downloadFile);
+
+    // Format toggle
+    document.querySelectorAll('.format-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var fmt = btn.getAttribute('data-format');
+        if (fmt === currentFormat) return;
+        currentFormat = fmt;
+        document.querySelectorAll('.format-btn').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        switchFormat(fmt);
+      });
+    });
 
     // Clickable progress steps
     var steps = document.querySelectorAll('.progress-step');
@@ -205,12 +219,33 @@
   // ── Generate prompt ────────────────────────────────────────────────────────
   function generateAndShow() {
     var answers = gatherAnswers();
-    generatedMd = generatePrompt(answers);
+    generatedMd = generateWorkflowFile(answers);
+    generatedPrompt = generateAgentPrompt(answers);
+    currentFormat = 'workflow';
+    document.querySelectorAll('.format-btn').forEach(function (b) { b.classList.remove('active'); });
+    document.getElementById('fmt-workflow').classList.add('active');
     goToStep(5);
     showPreview(generatedMd);
+    showNextSteps('workflow');
     showTips(answers.archetype);
     var name = workflowName(answers.archetype, answers.customDescription);
     document.getElementById('preview-filename').textContent = name + '.md';
+    document.getElementById('btn-download').style.display = '';
+  }
+
+  function switchFormat(fmt) {
+    var answers = gatherAnswers();
+    var name = workflowName(answers.archetype, answers.customDescription);
+    if (fmt === 'prompt') {
+      showPreview(generatedPrompt);
+      document.getElementById('preview-filename').textContent = 'prompt.txt';
+      document.getElementById('btn-download').style.display = 'none';
+    } else {
+      showPreview(generatedMd);
+      document.getElementById('preview-filename').textContent = name + '.md';
+      document.getElementById('btn-download').style.display = '';
+    }
+    showNextSteps(fmt);
   }
 
   function workflowName(archetype, customDesc) {
@@ -220,7 +255,7 @@
     return archetype;
   }
 
-  function generatePrompt(answers) {
+  function generateWorkflowFile(answers) {
     var arch = getArchetype(answers.archetype);
     var name = workflowName(answers.archetype, answers.customDescription);
     var label = arch ? arch.label : 'Custom Workflow';
@@ -323,6 +358,82 @@
       }
     });
     return lines;
+  }
+
+  // ── Coding agent prompt ─────────────────────────────────────────────────
+  function generateAgentPrompt(answers) {
+    var arch = getArchetype(answers.archetype);
+    var name = workflowName(answers.archetype, answers.customDescription);
+    var label = arch ? arch.label : 'Custom Workflow';
+    var desc = arch ? arch.description : answers.customDescription || 'Custom agentic workflow';
+
+    var triggersReadable = answers.triggers.map(function (t) {
+      var map = {
+        'issues': 'when a new issue is opened',
+        'pull_request': 'when a pull request is opened',
+        'schedule': 'on a daily/weekly schedule',
+        'workflow_dispatch': 'on manual dispatch',
+        'issue_comment': 'on slash commands in comments',
+        'push': 'on push to main'
+      };
+      return map[t] || t;
+    }).join(', ');
+
+    var outputsReadable = answers.outputs.map(function (o) {
+      var map = {
+        'comments': 'post comments on issues/PRs',
+        'labels': 'add/remove labels',
+        'new-issues': 'create new issues',
+        'pull-requests': 'open pull requests',
+        'commits': 'commit file changes'
+      };
+      return map[o] || o;
+    }).join(', ');
+
+    var prompt = 'Create a workflow for GitHub Agentic Workflows using https://raw.githubusercontent.com/github/gh-aw/main/create.md\n\n';
+    prompt += 'The purpose of the workflow is: ' + desc + '\n\n';
+    prompt += 'Requirements:\n';
+    prompt += '- Name: ' + name + '\n';
+    prompt += '- Triggers: ' + triggersReadable + '\n';
+    prompt += '- Allowed outputs: ' + outputsReadable + '\n';
+    if (answers.needsData && answers.dataDescription) {
+      prompt += '- External data needed: ' + answers.dataDescription + '\n';
+      prompt += '- Add a pre-step to fetch this data before the agent runs\n';
+    }
+    prompt += '\nThe workflow should be saved to .github/workflows/' + name + '.md';
+    return prompt;
+  }
+
+  // ── Next steps ──────────────────────────────────────────────────────────
+  function showNextSteps(format) {
+    var panel = document.getElementById('next-steps-panel');
+    if (!panel) return;
+
+    var html = '<h3>Next steps</h3>';
+
+    if (format === 'workflow') {
+      html += step(1, 'Download the <code>.md</code> file and save it to <code>.github/workflows/</code> in your repository');
+      html += step(2, 'Install the <a href="https://cli.github.com" target="_blank">GitHub CLI</a> and the Agentic Workflows extension: <code>gh extension install github/gh-aw</code>');
+      html += step(3, 'Compile the workflow: <code>gh aw compile</code>');
+      html += step(4, 'Commit both the <code>.md</code> and generated <code>.lock.yml</code> files, then push');
+      html += step(5, 'Trigger a run from the Actions tab or with <code>gh aw run ' + (workflowName(gatherAnswers().archetype, gatherAnswers().customDescription)) + '</code>');
+    } else {
+      html += step(1, 'Copy the prompt above');
+      html += step(2, 'Open your coding agent — <a href="https://code.visualstudio.com/docs/copilot/agents/overview" target="_blank">VS Code Agent Mode</a>, GitHub Copilot, Claude, or Codex');
+      html += step(3, 'Paste the prompt and let the agent create the workflow file for you');
+      html += step(4, 'Review the generated <code>.md</code> file in <code>.github/workflows/</code>');
+      html += step(5, 'Compile with <code>gh aw compile</code>, commit, and push');
+    }
+
+    html += '<div style="margin-top:0.75rem;font-size:0.8rem;color:var(--text-muted);">' +
+      '📖 <a href="https://github.github.com/gh-aw/setup/quick-start/" target="_blank" style="color:var(--text-secondary);">Quick start guide</a>' +
+      ' · <a href="https://github.github.com/gh-aw/setup/creating-workflows/" target="_blank" style="color:var(--text-secondary);">Creating workflows</a></div>';
+
+    panel.innerHTML = html;
+  }
+
+  function step(n, content) {
+    return '<div class="next-step"><div class="next-step-num">' + n + '</div><div>' + content + '</div></div>';
   }
 
   // ── Archetype body builders ────────────────────────────────────────────────
@@ -730,12 +841,12 @@
 
   // ── Clipboard & download ───────────────────────────────────────────────────
   function copyToClipboard() {
-    navigator.clipboard.writeText(generatedMd).then(function () {
+    var text = currentFormat === 'prompt' ? generatedPrompt : generatedMd;
+    navigator.clipboard.writeText(text).then(function () {
       showToast('Copied to clipboard!');
     }).catch(function () {
-      // Fallback
       var ta = document.createElement('textarea');
-      ta.value = generatedMd;
+      ta.value = text;
       ta.style.position = 'fixed';
       ta.style.opacity = '0';
       document.body.appendChild(ta);

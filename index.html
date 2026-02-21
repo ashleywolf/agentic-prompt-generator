@@ -268,7 +268,22 @@
     <!-- Step 5: Preview -->
     <section class="wizard-step" id="step-5">
       <h2 class="step-title">Preview &amp; Download</h2>
-      <p class="step-description">Your generated workflow prompt is ready.</p>
+      <p class="step-description">Choose how you want to use your workflow.</p>
+
+      <!-- Format toggle -->
+      <div class="format-toggle" id="format-toggle">
+        <button class="format-btn active" data-format="workflow" id="fmt-workflow">
+          <span class="format-icon">📄</span>
+          <span class="format-label">Workflow file</span>
+          <span class="format-desc">Ready-to-use <code>.md</code> file for GitHub Actions</span>
+        </button>
+        <button class="format-btn" data-format="prompt" id="fmt-prompt">
+          <span class="format-icon">💬</span>
+          <span class="format-label">Coding agent prompt</span>
+          <span class="format-desc">Paste into Copilot, Claude, or Codex to create the workflow</span>
+        </button>
+      </div>
+
       <div class="preview-container">
         <div class="preview-header">
           <h3 id="preview-filename">workflow.md</h3>
@@ -279,6 +294,10 @@
         </div>
         <div class="preview-code" id="preview-code"></div>
       </div>
+
+      <!-- Next steps -->
+      <div class="next-steps-panel" id="next-steps-panel"></div>
+
       <div class="tips-panel" id="tips-panel"></div>
       <div class="step-nav">
         <button class="btn btn-secondary" id="prev-5">← Back to edit</button>
