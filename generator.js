@@ -18,55 +18,10 @@
       .then(function (r) { return r.json(); })
       .then(function (data) {
         patterns = data;
-        var m = data.metadata;
-        document.getElementById('header-stats').innerHTML =
-          'Built from scanning <strong>' + m.source_repos + '</strong> public repos with <strong>' + m.active_workflows + '</strong> active workflows';
-        populateInsights(data);
-        populateBadges(data);
       })
       .catch(function () {
-        document.getElementById('header-stats').textContent = 'Patterns data unavailable';
+        // patterns unavailable — generator still works with defaults
       });
-  }
-
-  function populateInsights(data) {
-    var grid = document.getElementById('insights-grid');
-    if (!grid) return;
-    var m = data.metadata;
-    var findings = data.research_findings || {};
-
-    var items = [
-      { label: 'Repos scanned', value: m.source_repos || '—' },
-      { label: 'Active workflows', value: m.active_workflows || '—' },
-      { label: 'Total workflows', value: m.total_workflows || '—' },
-      { label: 'Best trigger combo', value: 'schedule + dispatch', detail: '80% success' },
-    ];
-
-    var html = '';
-    items.forEach(function (item) {
-      html += '<div class="insight-item"><div class="insight-value">' + item.value + '</div>' +
-        '<div class="insight-label">' + item.label + '</div>' +
-        (item.detail ? '<div class="insight-detail">' + item.detail + '</div>' : '') + '</div>';
-    });
-
-    // Key warnings
-    if (findings.slash_command_broken) {
-      html += '<div class="insight-item insight-warn"><div class="insight-value">⚠</div>' +
-        '<div class="insight-label">slash_command: 0% success</div></div>';
-    }
-    grid.innerHTML = html;
-  }
-
-  function populateBadges(data) {
-    if (!data.archetypes) return;
-    data.archetypes.forEach(function (arch) {
-      var el = document.getElementById('badge-' + arch.id);
-      if (!el) return;
-      var rate = Math.round(arch.success_rate * 100);
-      var level = rate >= 70 ? 'high' : (rate >= 50 ? 'medium' : 'low');
-      el.className = 'badge-inline badge-' + level;
-      el.textContent = rate + '% · ' + arch.count + ' repos';
-    });
   }
 
   function getArchetype(id) {
@@ -150,7 +105,6 @@
       cb.addEventListener('change', function () {
         updateCardSelection('#trigger-options', 'checkbox');
         document.getElementById('next-2').disabled = !hasChecked('trigger');
-        showTriggerWarnings();
       });
     });
 
@@ -182,52 +136,6 @@
 
   function hasChecked(name) {
     return document.querySelectorAll('input[name="' + name + '"]:checked').length > 0;
-  }
-
-  function showTriggerWarnings() {
-    var panel = document.getElementById('trigger-warnings');
-    if (!panel || !patterns || !patterns.trigger_combos) return;
-
-    var selected = [];
-    document.querySelectorAll('input[name="trigger"]:checked').forEach(function (cb) {
-      selected.push(cb.value);
-    });
-    if (selected.length === 0) { panel.innerHTML = ''; return; }
-
-    var combo = selected.slice().sort().join('+');
-    var html = '';
-
-    // Check for slash_command warning
-    if (selected.indexOf('issue_comment') !== -1) {
-      html += '<div class="trigger-warning danger">⚠ Slash commands (issue_comment) have 0-2% success rate. Consider using workflow_dispatch instead.</div>';
-    }
-
-    // Check combo against known data
-    var match = null;
-    for (var i = 0; i < patterns.trigger_combos.length; i++) {
-      if (patterns.trigger_combos[i].combo === combo) {
-        match = patterns.trigger_combos[i];
-        break;
-      }
-    }
-
-    if (match) {
-      var rate = Math.round(match.success_rate * 100);
-      if (match.risk === 'low') {
-        html += '<div class="trigger-warning success">✓ ' + combo + ' has ' + rate + '% success rate across ' + match.count + ' runs</div>';
-      } else if (match.risk === 'medium') {
-        html += '<div class="trigger-warning warn">~ ' + combo + ' has ' + rate + '% success rate — consider simplifying triggers</div>';
-      } else {
-        html += '<div class="trigger-warning danger">✗ ' + combo + ' has ' + rate + '% success rate — this combination frequently fails</div>';
-      }
-    }
-
-    // Suggest workflow_dispatch if not selected
-    if (selected.indexOf('workflow_dispatch') === -1 && selected.length > 0) {
-      html += '<div class="trigger-warning info">💡 Adding manual dispatch (workflow_dispatch) improves success rate by ~21 percentage points</div>';
-    }
-
-    panel.innerHTML = html;
   }
 
   function prefillFromArchetype(id) {

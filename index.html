@@ -17,17 +17,9 @@
         </svg>
         <h1>Agentic Prompt Generator</h1>
       </div>
-      <p class="subtitle">Generate production-ready GitHub Copilot workflow prompts based on what actually works</p>
-      <p class="stats" id="header-stats">Loading data…</p>
+      <p class="subtitle">Create GitHub Copilot agentic workflow prompts in minutes</p>
     </div>
   </header>
-
-  <!-- Data Insights Panel -->
-  <div class="insights-bar" id="insights-bar">
-    <div class="container">
-      <div class="insights-grid" id="insights-grid"></div>
-    </div>
-  </div>
 
   <main class="container">
     <!-- Progress bar -->
@@ -63,7 +55,7 @@
           <input type="radio" name="archetype" value="issue-triage">
           <div class="archetype-icon">🏷️</div>
           <div class="option-info">
-            <div class="option-label">Issue Triage <span class="badge-inline" id="badge-issue-triage"></span></div>
+            <div class="option-label">Issue Triage</div>
             <div class="option-desc">Classify and label new issues</div>
           </div>
         </label>
@@ -71,7 +63,7 @@
           <input type="radio" name="archetype" value="code-improvement">
           <div class="archetype-icon">🔧</div>
           <div class="option-info">
-            <div class="option-label">Code Improvement <span class="badge-inline" id="badge-code-improvement"></span></div>
+            <div class="option-label">Code Improvement</div>
             <div class="option-desc">Daily code quality improvements</div>
           </div>
         </label>
@@ -79,7 +71,7 @@
           <input type="radio" name="archetype" value="status-report">
           <div class="archetype-icon">📊</div>
           <div class="option-info">
-            <div class="option-label">Status Report <span class="badge-inline" id="badge-status-report"></span></div>
+            <div class="option-label">Status Report</div>
             <div class="option-desc">Periodic status/activity reports</div>
           </div>
         </label>
@@ -87,7 +79,7 @@
           <input type="radio" name="archetype" value="upstream-monitor">
           <div class="archetype-icon">🔭</div>
           <div class="option-info">
-            <div class="option-label">Upstream Monitor <span class="badge-inline" id="badge-upstream-monitor"></span></div>
+            <div class="option-label">Upstream Monitor</div>
             <div class="option-desc">Track upstream deps and sync changes</div>
           </div>
         </label>
@@ -95,7 +87,7 @@
           <input type="radio" name="archetype" value="dependency-monitor">
           <div class="archetype-icon">📦</div>
           <div class="option-info">
-            <div class="option-label">Dependency Monitor <span class="badge-inline" id="badge-dependency-monitor"></span></div>
+            <div class="option-label">Dependency Monitor</div>
             <div class="option-desc">Track and update project dependencies</div>
           </div>
         </label>
@@ -103,7 +95,7 @@
           <input type="radio" name="archetype" value="pr-review">
           <div class="archetype-icon">👀</div>
           <div class="option-info">
-            <div class="option-label">PR Review <span class="badge-inline" id="badge-pr-review"></span></div>
+            <div class="option-label">PR Review</div>
             <div class="option-desc">Review PRs for quality and issues</div>
           </div>
         </label>
@@ -111,7 +103,7 @@
           <input type="radio" name="archetype" value="documentation-updater">
           <div class="archetype-icon">📝</div>
           <div class="option-info">
-            <div class="option-label">Documentation Updater <span class="badge-inline" id="badge-documentation-updater"></span></div>
+            <div class="option-label">Documentation Updater</div>
             <div class="option-desc">Keep docs accurate and up-to-date</div>
           </div>
         </label>
@@ -119,7 +111,7 @@
           <input type="radio" name="archetype" value="content-moderation">
           <div class="archetype-icon">🛡️</div>
           <div class="option-info">
-            <div class="option-label">Content Moderation <span class="badge-inline" id="badge-content-moderation"></span></div>
+            <div class="option-label">Content Moderation</div>
             <div class="option-desc">Check PRs/issues for spam or policy violations</div>
           </div>
         </label>
@@ -190,7 +182,6 @@
           </div>
         </label>
       </div>
-      <div class="trigger-warnings-panel" id="trigger-warnings"></div>
       <div class="step-nav">
         <button class="btn btn-secondary" id="prev-2">← Back</button>
         <button class="btn btn-primary" id="next-2" disabled>Next →</button>
