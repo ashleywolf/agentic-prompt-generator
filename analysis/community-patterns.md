@@ -29,7 +29,7 @@
 | [copilot-community-sdk/copilot-sdk-java](https://github.com/copilot-community-sdk/copilot-sdk-java) | 39 | 1 | 100% | — |
 | [chrisreddington/flight-school](https://github.com/chrisreddington/flight-school) | 24 | 1 | 100% | structured |
 | [talk2MeGooseman/stream_closed_captioner_phoenix](https://github.com/talk2MeGooseman/stream_closed_captioner_phoenix) | 24 | 1 | 100% | structured, pre-steps |
-| [kubestellar/docs](https://github.com/kubestellar/docs) | 23 | 1 | 100% | format-spec, structured, pre-steps |
+| [kubestellar/docs](https://github.com/kubestellar/docs) | 23 | 1 | 100% | format-spec, pre-steps, structured |
 | [github-dockyard-community/radio](https://github.com/github-dockyard-community/radio) | 5 | 1 | 100% | — |
 | [llm-d/llm-d-pd-utils](https://github.com/llm-d/llm-d-pd-utils) | 5 | 1 | 100% | structured |
 

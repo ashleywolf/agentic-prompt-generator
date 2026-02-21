@@ -515,6 +515,75 @@ def analyze_success_predictors(workflows):
         avg = sum(rates) / len(rates)
         lines.append(f"| {combo} | {avg:.0%} | {len(rates)} |")
 
+    # Bimodal analysis: binary outcome (healthy vs not)
+    lines.append("\n### ⚖️ Bimodal Outcome Analysis\n")
+    always_pass = sum(1 for w in with_data if w["success_rate"] == 1.0)
+    always_fail = sum(1 for w in with_data if w["success_rate"] == 0.0)
+    mixed = len(with_data) - always_pass - always_fail
+    lines.append(f"Success rate distribution is **bimodal** — most workflows either always work or always fail:\n")
+    lines.append(f"- Always succeed (100%): {always_pass} ({always_pass/len(with_data):.0%})")
+    lines.append(f"- Always fail (0%): {always_fail} ({always_fail/len(with_data):.0%})")
+    lines.append(f"- Mixed (1-99%): {mixed} ({mixed/len(with_data):.0%})\n")
+
+    # Binary outcome: healthy (>=80% success) vs not
+    lines.append("**Binary outcome: healthy (≥80% success) vs unhealthy**\n")
+    lines.append("| Feature | Healthy % (with) | Healthy % (without) | Odds Ratio | p-value |")
+    lines.append("|---------|------------------|---------------------|------------|---------|")
+
+    binary_features_for_or = [
+        ("has_pre_steps", "Pre-fetch steps"),
+        ("has_numbered_steps", "Numbered instructions"),
+        ("has_examples", "Code block examples"),
+        ("has_format_spec", "Output format spec"),
+        ("has_rate_limit_awareness", "Rate limit awareness"),
+        ("has_error_handling", "Error handling"),
+        ("has_do_not_instructions", "Negative constraints (DO NOT)"),
+        ("uses_bash", "Bash tool enabled"),
+    ]
+
+    for feat_key, feat_name in binary_features_for_or:
+        with_feat = [w for w in deduped if w.get(feat_key)]
+        without_feat = [w for w in deduped if not w.get(feat_key)]
+        if len(with_feat) < MIN_N or len(without_feat) < MIN_N:
+            continue
+        # Healthy = success_rate >= 0.8
+        a = sum(1 for w in with_feat if w["success_rate"] >= 0.8)   # with + healthy
+        b = len(with_feat) - a                                       # with + unhealthy
+        c = sum(1 for w in without_feat if w["success_rate"] >= 0.8) # without + healthy
+        d = len(without_feat) - c                                     # without + unhealthy
+        # Odds ratio (add 0.5 for zero-cell correction)
+        odds_ratio = ((a + 0.5) * (d + 0.5)) / ((b + 0.5) * (c + 0.5))
+        # Fisher's exact test approximation via chi-squared
+        n_total = a + b + c + d
+        expected_a = (a + b) * (a + c) / n_total
+        expected_b = (a + b) * (b + d) / n_total
+        expected_c = (c + d) * (a + c) / n_total
+        expected_d = (c + d) * (b + d) / n_total
+        chi2 = 0
+        for obs, exp in [(a, expected_a), (b, expected_b), (c, expected_c), (d, expected_d)]:
+            if exp > 0:
+                chi2 += (obs - exp) ** 2 / exp
+        # Chi-squared to p-value (1 df) using normal approx
+        p_val = 2 * (1 - _norm_cdf(math.sqrt(chi2))) if chi2 > 0 else 1.0
+        healthy_with = a / len(with_feat) if with_feat else 0
+        healthy_without = c / len(without_feat) if without_feat else 0
+        or_str = f"{odds_ratio:.2f}" if odds_ratio < 10 else f"{odds_ratio:.1f}"
+        lines.append(f"| {feat_name} | {healthy_with:.0%} ({len(with_feat)}) | {healthy_without:.0%} ({len(without_feat)}) | {or_str} | {p_val:.3f} |")
+
+    # Logistic regression (multivariate)
+    lines.append("\n### 🧮 Multivariate Logistic Regression (Deduplicated)\n")
+    lines.append("Controls for confounders — isolates each feature's independent effect.\n")
+
+    logreg_result = _logistic_regression(deduped)
+    if logreg_result:
+        lines.append("| Feature | Coefficient | Odds Ratio | Std Error | z-score | p-value | Sig |")
+        lines.append("|---------|-------------|------------|-----------|---------|---------|-----|")
+        for name, coef, se, z, p, odds in logreg_result:
+            sig = "✅" if p < 0.05 else "⚪"
+            lines.append(f"| {name} | {coef:+.3f} | {odds:.2f} | {se:.3f} | {z:.2f} | {p:.3f} | {sig} |")
+    else:
+        lines.append("*Logistic regression could not converge with available data.*\n")
+
     # Top takeaways
     lines.append("\n### Key Takeaways\n")
     if effects:
@@ -611,6 +680,301 @@ def _norm_cdf(x):
     t = 1.0 / (1.0 + p * x)
     y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * math.exp(-x * x)
     return 0.5 * (1.0 + sign * y)
+
+
+def _logistic_regression(workflows, max_iter=100, lr=0.01):
+    """Pure-Python logistic regression via gradient descent.
+    Returns list of (feature_name, coefficient, std_error, z_score, p_value, odds_ratio)
+    or None if can't converge."""
+    feature_names = [
+        "prompt_lines_z", "trigger_count", "has_pre_steps", "has_examples",
+        "has_format_spec", "has_error_handling", "has_rate_limit_awareness",
+        "has_do_not_instructions", "uses_bash", "has_numbered_steps",
+        "is_production", "is_test",
+    ]
+    display_names = [
+        "Prompt length (z-scored)", "Trigger count", "Pre-fetch steps", "Code examples",
+        "Output format spec", "Error handling", "Rate limit awareness",
+        "Negative constraints (DO NOT)", "Bash tool", "Numbered instructions",
+        "Production repo", "Test repo",
+    ]
+
+    # Build feature matrix and outcome
+    X = []
+    y = []
+    for w in workflows:
+        if w.get("success_rate") is None:
+            continue
+        row = [
+            w.get("prompt_lines", 0),   # will z-score below
+            w.get("trigger_count", 1),
+            1 if w.get("has_pre_steps") else 0,
+            1 if w.get("has_examples") else 0,
+            1 if w.get("has_format_spec") else 0,
+            1 if w.get("has_error_handling") else 0,
+            1 if w.get("has_rate_limit_awareness") else 0,
+            1 if w.get("has_do_not_instructions") else 0,
+            1 if w.get("uses_bash") else 0,
+            1 if w.get("has_numbered_steps") else 0,
+            1 if w.get("repo_maturity") == "production" else 0,
+            1 if w.get("repo_maturity") == "test" else 0,
+        ]
+        X.append(row)
+        y.append(1 if w["success_rate"] >= 0.8 else 0)  # binary: healthy
+
+    if len(X) < 50:
+        return None
+
+    n_samples = len(X)
+    n_features = len(feature_names)
+
+    # Z-score prompt_lines (column 0)
+    col0 = [row[0] for row in X]
+    mean0 = sum(col0) / len(col0)
+    std0 = math.sqrt(sum((v - mean0) ** 2 for v in col0) / len(col0))
+    if std0 > 0:
+        for row in X:
+            row[0] = (row[0] - mean0) / std0
+
+    # Add intercept (column 0)
+    for row in X:
+        row.insert(0, 1.0)
+    feature_names_full = ["intercept"] + feature_names
+    display_names_full = ["(Intercept)"] + display_names
+    n_features_full = n_features + 1
+
+    # Initialize weights
+    w_vec = [0.0] * n_features_full
+
+    def sigmoid(z):
+        z = max(-500, min(500, z))
+        return 1.0 / (1.0 + math.exp(-z))
+
+    # Gradient descent with adaptive learning rate
+    for iteration in range(max_iter):
+        # Compute predictions
+        preds = []
+        for row in X:
+            z = sum(w_vec[j] * row[j] for j in range(n_features_full))
+            preds.append(sigmoid(z))
+
+        # Compute gradient
+        grad = [0.0] * n_features_full
+        for i in range(n_samples):
+            err = preds[i] - y[i]
+            for j in range(n_features_full):
+                grad[j] += err * X[i][j]
+
+        # Update weights
+        for j in range(n_features_full):
+            w_vec[j] -= lr * grad[j] / n_samples
+
+    # Compute standard errors via Hessian diagonal approximation
+    preds_final = []
+    for row in X:
+        z = sum(w_vec[j] * row[j] for j in range(n_features_full))
+        preds_final.append(sigmoid(z))
+
+    # Diagonal of Fisher information matrix
+    se = []
+    for j in range(n_features_full):
+        fisher_jj = sum(preds_final[i] * (1 - preds_final[i]) * X[i][j] ** 2 for i in range(n_samples))
+        if fisher_jj > 1e-10:
+            se.append(1.0 / math.sqrt(fisher_jj))
+        else:
+            se.append(float("inf"))
+
+    results = []
+    for j in range(1, n_features_full):  # skip intercept
+        coef = w_vec[j]
+        std_err = se[j]
+        z_score = coef / std_err if std_err > 0 and std_err != float("inf") else 0
+        p_value = 2 * (1 - _norm_cdf(abs(z_score)))
+        odds_ratio = math.exp(min(coef, 20))  # cap to avoid overflow
+        results.append((display_names[j - 1], coef, std_err, z_score, p_value, odds_ratio))
+
+    # Sort by absolute z-score (most significant first)
+    results.sort(key=lambda x: -abs(x[3]))
+    return results
+
+
+# ──────────────────────────────────────────────────────────────
+# Temporal Analysis
+# ──────────────────────────────────────────────────────────────
+
+def analyze_temporal(workflows):
+    """Time-series analysis: success trends, adoption curves, degradation detection."""
+    with_runs = [w for w in workflows if w.get("recent_runs") and len(w["recent_runs"]) > 0]
+    if len(with_runs) < 30:
+        return "Insufficient temporal data for analysis."
+
+    lines = []
+    lines.append("## 📅 Temporal Analysis: Trends Over Time\n")
+    lines.append(f"**Dataset:** {len(with_runs)} workflows with run history, "
+                 f"{sum(len(w['recent_runs']) for w in with_runs)} total run records\n")
+
+    # Collect all runs by month
+    monthly_runs = defaultdict(lambda: {"success": 0, "failure": 0, "total": 0})
+    weekly_runs = defaultdict(lambda: {"success": 0, "failure": 0, "total": 0})
+    workflow_first_run = {}
+    workflow_trajectories = defaultdict(list)
+
+    for w in with_runs:
+        wf_id = f"{w['owner']}/{w['repo']}/{w['file']}"
+        for run in w["recent_runs"]:
+            try:
+                dt = datetime.fromisoformat(run["created_at"].replace("Z", "+00:00"))
+            except (ValueError, KeyError):
+                continue
+            month_key = dt.strftime("%Y-%m")
+            week_key = dt.strftime("%Y-W%W")
+            is_success = run.get("conclusion") == "success"
+
+            monthly_runs[month_key]["total"] += 1
+            monthly_runs[month_key]["success" if is_success else "failure"] += 1
+            weekly_runs[week_key]["total"] += 1
+            weekly_runs[week_key]["success" if is_success else "failure"] += 1
+
+            workflow_trajectories[wf_id].append((dt, is_success))
+
+            if wf_id not in workflow_first_run or dt < workflow_first_run[wf_id]:
+                workflow_first_run[wf_id] = dt
+
+    # Monthly success rate trend
+    lines.append("### Monthly Success Rate Trend\n")
+    lines.append("| Month | Total Runs | Success Rate | New Workflows |")
+    lines.append("|-------|-----------|--------------|---------------|")
+
+    monthly_new = Counter()
+    for wf_id, first_dt in workflow_first_run.items():
+        monthly_new[first_dt.strftime("%Y-%m")] += 1
+
+    for month in sorted(monthly_runs.keys()):
+        data = monthly_runs[month]
+        sr = data["success"] / data["total"] if data["total"] > 0 else 0
+        new_wf = monthly_new.get(month, 0)
+        lines.append(f"| {month} | {data['total']} | {sr:.0%} | {new_wf} |")
+
+    # Adoption curve
+    lines.append("\n### Adoption Curve\n")
+    cumulative = 0
+    adoption_data = []
+    for month in sorted(monthly_new.keys()):
+        cumulative += monthly_new[month]
+        adoption_data.append((month, cumulative, monthly_new[month]))
+
+    if len(adoption_data) > 1:
+        lines.append(f"- First observed workflow: {adoption_data[0][0]}")
+        lines.append(f"- Latest month: {adoption_data[-1][0]}")
+        lines.append(f"- Total unique workflows tracked: {adoption_data[-1][1]}")
+        recent_3 = [d for d in adoption_data if d[0] >= sorted(monthly_new.keys())[-3]]
+        avg_recent = sum(d[2] for d in recent_3) / len(recent_3) if recent_3 else 0
+        lines.append(f"- Avg new workflows/month (last 3 months): {avg_recent:.0f}")
+
+    # Degradation detection: workflows that started healthy then turned unhealthy
+    lines.append("\n### Degradation Detection\n")
+    lines.append("Workflows where early runs succeeded but recent runs are failing:\n")
+
+    degraded_list = []
+    stable_good = 0
+    stable_bad = 0
+
+    for wf_id, trajectory in workflow_trajectories.items():
+        if len(trajectory) < 3:
+            continue
+        trajectory.sort(key=lambda x: x[0])
+        half = len(trajectory) // 2
+        early = trajectory[:half]
+        late = trajectory[half:]
+        early_sr = sum(1 for _, s in early if s) / len(early)
+        late_sr = sum(1 for _, s in late if s) / len(late)
+
+        if early_sr >= 0.8 and late_sr < 0.5:
+            degraded_list.append((wf_id, early_sr, late_sr, len(trajectory)))
+        elif early_sr >= 0.8 and late_sr >= 0.8:
+            stable_good += 1
+        elif early_sr < 0.5 and late_sr < 0.5:
+            stable_bad += 1
+
+    lines.append(f"- **Degraded** (early ≥80%, recent <50%): {len(degraded_list)} workflows")
+    lines.append(f"- **Stable healthy**: {stable_good} workflows")
+    lines.append(f"- **Stable failing**: {stable_bad} workflows")
+
+    if degraded_list:
+        lines.append("\n| Workflow | Early Success | Recent Success | Runs |")
+        lines.append("|----------|---------------|----------------|------|")
+        for wf_id, early, late, n in sorted(degraded_list, key=lambda x: x[2])[:15]:
+            lines.append(f"| {wf_id} | {early:.0%} | {late:.0%} | {n} |")
+
+    # Day-of-week effect
+    lines.append("\n### Day-of-Week Effect\n")
+    dow_runs = defaultdict(lambda: {"success": 0, "total": 0})
+    dow_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    for w in with_runs:
+        for run in w["recent_runs"]:
+            try:
+                dt = datetime.fromisoformat(run["created_at"].replace("Z", "+00:00"))
+            except (ValueError, KeyError):
+                continue
+            dow = dt.weekday()
+            dow_runs[dow]["total"] += 1
+            if run.get("conclusion") == "success":
+                dow_runs[dow]["success"] += 1
+
+    lines.append("| Day | Runs | Success Rate |")
+    lines.append("|-----|------|--------------|")
+    for i in range(7):
+        if dow_runs[i]["total"] > 0:
+            sr = dow_runs[i]["success"] / dow_runs[i]["total"]
+            lines.append(f"| {dow_names[i]} | {dow_runs[i]['total']} | {sr:.0%} |")
+
+    # Run duration analysis (if available)
+    durations_success = []
+    durations_failure = []
+    for w in with_runs:
+        for run in w["recent_runs"]:
+            try:
+                start = datetime.fromisoformat(run["run_started_at"].replace("Z", "+00:00"))
+                end = datetime.fromisoformat(run["updated_at"].replace("Z", "+00:00"))
+                dur_min = (end - start).total_seconds() / 60
+                if 0 < dur_min < 120:  # filter outliers
+                    if run.get("conclusion") == "success":
+                        durations_success.append(dur_min)
+                    elif run.get("conclusion") == "failure":
+                        durations_failure.append(dur_min)
+            except (ValueError, KeyError):
+                continue
+
+    if durations_success and durations_failure:
+        lines.append("\n### Run Duration Analysis\n")
+        avg_s = sum(durations_success) / len(durations_success)
+        avg_f = sum(durations_failure) / len(durations_failure)
+        med_s = sorted(durations_success)[len(durations_success) // 2]
+        med_f = sorted(durations_failure)[len(durations_failure) // 2]
+        lines.append("| Outcome | Count | Avg Duration | Median Duration |")
+        lines.append("|---------|-------|--------------|-----------------|")
+        lines.append(f"| Success | {len(durations_success)} | {avg_s:.1f} min | {med_s:.1f} min |")
+        lines.append(f"| Failure | {len(durations_failure)} | {avg_f:.1f} min | {med_f:.1f} min |")
+
+        p_dur = _mann_whitney_u(durations_success, durations_failure)
+        if p_dur is not None:
+            lines.append(f"\nDuration difference p-value (Mann-Whitney U): {p_dur:.3f}")
+
+    # Key temporal findings
+    lines.append("\n### Key Temporal Findings\n")
+    if monthly_runs:
+        months_sorted = sorted(monthly_runs.keys())
+        if len(months_sorted) >= 2:
+            first_month = monthly_runs[months_sorted[0]]
+            last_month = monthly_runs[months_sorted[-1]]
+            first_sr = first_month["success"] / first_month["total"] if first_month["total"] > 0 else 0
+            last_sr = last_month["success"] / last_month["total"] if last_month["total"] > 0 else 0
+            trend = "improving" if last_sr > first_sr + 0.05 else "declining" if last_sr < first_sr - 0.05 else "stable"
+            lines.append(f"- Overall trend: **{trend}** ({first_sr:.0%} → {last_sr:.0%} from {months_sorted[0]} to {months_sorted[-1]})")
+    lines.append(f"- Degraded workflows: {len(degraded_list)} ({len(degraded_list)/len(workflow_trajectories)*100:.1f}% of tracked)")
+    lines.append(f"- Most runs occur on: {dow_names[max(dow_runs, key=lambda d: dow_runs[d]['total'])] if dow_runs else 'N/A'}")
+
+    return "\n".join(lines)
 
 
 # ──────────────────────────────────────────────────────────────
@@ -1018,6 +1382,7 @@ def main():
 
     analyses = [
         ("success-predictors", "Success Predictors", analyze_success_predictors),
+        ("temporal-analysis", "Temporal Analysis", analyze_temporal),
         ("workflow-clusters", "Workflow Clustering", analyze_clustering),
         ("failure-taxonomy", "Failure Taxonomy", analyze_failures),
         ("community-patterns", "Community Patterns", analyze_community),

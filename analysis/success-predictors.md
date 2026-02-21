@@ -74,6 +74,46 @@
 | workflow_dispatch | 97% | 10 |
 | discussion + schedule + workflow_dispatch | 56% | 9 |
 
+### ⚖️ Bimodal Outcome Analysis
+
+Success rate distribution is **bimodal** — most workflows either always work or always fail:
+
+- Always succeed (100%): 245 (38%)
+- Always fail (0%): 133 (21%)
+- Mixed (1-99%): 261 (41%)
+
+**Binary outcome: healthy (≥80% success) vs unhealthy**
+
+| Feature | Healthy % (with) | Healthy % (without) | Odds Ratio | p-value |
+|---------|------------------|---------------------|------------|---------|
+| Pre-fetch steps | 55% (92) | 54% (422) | 1.05 | 0.838 |
+| Numbered instructions | 54% (435) | 56% (79) | 0.95 | 0.813 |
+| Code block examples | 56% (297) | 52% (217) | 1.18 | 0.350 |
+| Output format spec | 57% (254) | 52% (260) | 1.23 | 0.240 |
+| Rate limit awareness | 57% (37) | 54% (477) | 1.10 | 0.772 |
+| Error handling | 54% (177) | 55% (337) | 0.95 | 0.791 |
+| Negative constraints (DO NOT) | 62% (196) | 50% (318) | 1.61 | 0.009 |
+| Bash tool enabled | 49% (93) | 56% (421) | 0.78 | 0.283 |
+
+### 🧮 Multivariate Logistic Regression (Deduplicated)
+
+Controls for confounders — isolates each feature's independent effect.
+
+| Feature | Coefficient | Odds Ratio | Std Error | z-score | p-value | Sig |
+|---------|-------------|------------|-----------|---------|---------|-----|
+| Trigger count | +0.033 | 1.03 | 0.033 | 0.99 | 0.322 | ⚪ |
+| Prompt length (z-scored) | +0.055 | 1.06 | 0.090 | 0.61 | 0.541 | ⚪ |
+| Negative constraints (DO NOT) | +0.032 | 1.03 | 0.144 | 0.23 | 0.821 | ⚪ |
+| Code examples | +0.017 | 1.02 | 0.117 | 0.15 | 0.881 | ⚪ |
+| Output format spec | +0.019 | 1.02 | 0.126 | 0.15 | 0.883 | ⚪ |
+| Numbered instructions | +0.012 | 1.01 | 0.096 | 0.13 | 0.897 | ⚪ |
+| Production repo | +0.017 | 1.02 | 0.157 | 0.11 | 0.913 | ⚪ |
+| Test repo | +0.008 | 1.01 | 0.194 | 0.04 | 0.965 | ⚪ |
+| Bash tool | -0.006 | 0.99 | 0.208 | -0.03 | 0.977 | ⚪ |
+| Pre-fetch steps | +0.004 | 1.00 | 0.210 | 0.02 | 0.985 | ⚪ |
+| Error handling | +0.002 | 1.00 | 0.151 | 0.01 | 0.989 | ⚪ |
+| Rate limit awareness | +0.002 | 1.00 | 0.331 | 0.01 | 0.994 | ⚪ |
+
 ### Key Takeaways
 
 ⚠️ No features reached statistical significance at p < 0.05 — findings are directional only.

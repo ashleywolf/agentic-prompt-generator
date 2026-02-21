@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agentic Prompt Generator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <h1>Agentic Prompt Generator</h1>
+      <p class="subtitle">Generate production-ready GitHub Copilot workflow prompts based on what actually works</p>
+      <p class="stats" id="header-stats">Loading data…</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Progress bar -->
+    <div class="progress-bar" id="progress-bar">
+      <div class="progress-step active" data-step="1">
+        <div class="step-indicator">1</div>
+        <div class="step-label">Archetype</div>
+      </div>
+      <div class="progress-step" data-step="2">
+        <div class="step-indicator">2</div>
+        <div class="step-label">Triggers</div>
+      </div>
+      <div class="progress-step" data-step="3">
+        <div class="step-indicator">3</div>
+        <div class="step-label">Outputs</div>
+      </div>
+      <div class="progress-step" data-step="4">
+        <div class="step-indicator">4</div>
+        <div class="step-label">Data</div>
+      </div>
+      <div class="progress-step" data-step="5">
+        <div class="step-indicator">5</div>
+        <div class="step-label">Preview</div>
+      </div>
+    </div>
+
+    <!-- Step 1: Archetype -->
+    <section class="wizard-step active" id="step-1">
+      <h2 class="step-title">What should this workflow do?</h2>
+      <p class="step-description">Choose the type of agentic workflow you want to create.</p>
+      <div class="option-group" id="archetype-options">
+        <label class="option-card" data-value="issue-triage">
+          <input type="radio" name="archetype" value="issue-triage">
+          <div class="option-info">
+            <div class="option-label">Issue Triage</div>
+            <div class="option-desc">Classify and label new issues</div>
+          </div>
+        </label>
+        <label class="option-card" data-value="code-improvement">
+          <input type="radio" name="archetype" value="code-improvement">
+          <div class="option-info">
+            <div class="option-label">Code Improvement</div>
+            <div class="option-desc">Daily code quality improvements (tests, simplification, docs)</div>
+          </div>
+        </label>
+        <label class="option-card" data-value="status-report">
+          <input type="radio" name="archetype" value="status-report">
+          <div class="option-info">
+            <div class="option-label">Status Report</div>
+            <div class="option-desc">Generate periodic status/activity reports</div>
+          </div>
+        </label>
+        <label class="option-card" data-value="dependency-monitor">
+          <input type="radio" name="archetype" value="dependency-monitor">
+          <div class="option-info">
+            <div class="option-label">Dependency Monitor</div>
+            <div class="option-desc">Track upstream changes and sync</div>
+          </div>
+        </label>
+        <label class="option-card" data-value="content-moderation">
+          <input type="radio" name="archetype" value="content-moderation">
+          <div class="option-info">
+            <div class="option-label">Content Moderation</div>
+            <div class="option-desc">Check PRs/issues for spam or policy violations</div>
+          </div>
+        </label>
+        <label class="option-card" data-value="custom">
+          <input type="radio" name="archetype" value="custom">
+          <div class="option-info">
+            <div class="option-label">Custom</div>
+            <div class="option-desc">Describe your own workflow</div>
+          </div>
+        </label>
+      </div>
+      <div class="conditional-field" id="custom-description-field">
+        <label for="custom-description">Describe what you want the workflow to do:</label>
+        <textarea class="text-area" id="custom-description" placeholder="e.g., Review pull requests for security vulnerabilities and leave comments on risky patterns…"></textarea>
+      </div>
+      <div class="step-nav">
+        <div></div>
+        <button class="btn btn-primary" id="next-1" disabled>Next →</button>
+      </div>
+    </section>
+
+    <!-- Step 2: Triggers -->
+    <section class="wizard-step" id="step-2">
+      <h2 class="step-title">What triggers it?</h2>
+      <p class="step-description">Select one or more events that start this workflow.</p>
+      <div class="option-group" id="trigger-options">
+        <label class="option-card">
+          <input type="checkbox" name="trigger" value="issues">
+          <div class="option-info">
+            <div class="option-label">New issue opened</div>
+            <div class="option-desc">Runs when an issue is created</div>
+          </div>
+        </label>
+        <label class="option-card">
+          <input type="checkbox" name="trigger" value="pull_request">
+          <div class="option-info">
+            <div class="option-label">Pull request opened</div>
+            <div class="option-desc">Runs when a PR is created</div>
+          </div>
+        </label>
+        <label class="option-card">
+          <input type="checkbox" name="trigger" value="schedule">
+          <div class="option-info">
+            <div class="option-label">On a schedule (daily/weekly)</div>
+            <div class="option-desc">Runs on a cron schedule</div>
+          </div>
+        </label>
+        <label class="option-card">
+          <input type="checkbox" name="trigger" value="workflow_dispatch">
+          <div class="option-info">
+            <div class="option-label">Manual dispatch</div>
+            <div class="option-desc">Triggered manually from the Actions tab</div>
+          </div>
+        </label>
+        <label class="option-card">
+          <input type="checkbox" name="trigger" value="issue_comment">
+          <div class="option-info">
+            <div class="option-label">Slash command (/command in comments)</div>
+            <div class="option-desc">Runs when a specific comment is posted</div>
+          </div>
+        </label>
+        <label class="option-card">
+          <input type="checkbox" name="trigger" value="push">
+          <div class="option-info">
+            <div class="option-label">Push to branch</div>
+            <div class="option-desc">Runs when code is pushed</div>
+          </div>
+        </label>
+      </div>
+      <div class="step-nav">
+        <button class="btn btn-secondary" id="prev-2">← Back</button>
+        <button class="btn btn-primary" id="next-2" disabled>Next →</button>
+      </div>
+    </section>
+
+    <!-- Step 3: Outputs -->
+    <section class="wizard-step" id="step-3">
+      <h2 class="step-title">What can it write?</h2>
+      <p class="step-description">Select the actions the workflow is allowed to perform.</p>
+      <div class="option-group" id="output-options">
+        <label class="option-card">
+          <input type="checkbox" name="output" value="comments">
+          <div class="option-info">
+            <div class="option-label">Comments on issues/PRs</div>
+            <div class="option-desc">Post comments with analysis, feedback, or results</div>
+          </div>
+        </label>
+        <label class="option-card">
+          <input type="checkbox" name="output" value="labels">
+          <div class="option-info">
+            <div class="option-label">Labels</div>
+            <div class="option-desc">Add or remove labels on issues</div>
+          </div>
+        </label>
+        <label class="option-card">
+          <input type="checkbox" name="output" value="new-issues">
+          <div class="option-info">
+            <div class="option-label">New issues</div>
+            <div class="option-desc">Create new issues for tracking or reporting</div>
+          </div>
+        </label>
+        <label class="option-card">
+          <input type="checkbox" name="output" value="pull-requests">
+          <div class="option-info">
+            <div class="option-label">Pull requests</div>
+            <div class="option-desc">Open pull requests with code changes</div>
+          </div>
+        </label>
+        <label class="option-card">
+          <input type="checkbox" name="output" value="commits">
+          <div class="option-info">
+            <div class="option-label">Commits to branches</div>
+            <div class="option-desc">Commit file changes directly to a branch</div>
+          </div>
+        </label>
+      </div>
+      <div class="step-nav">
+        <button class="btn btn-secondary" id="prev-3">← Back</button>
+        <button class="btn btn-primary" id="next-3" disabled>Next →</button>
+      </div>
+    </section>
+
+    <!-- Step 4: External data -->
+    <section class="wizard-step" id="step-4">
+      <h2 class="step-title">Does it need external data?</h2>
+      <p class="step-description">Does the workflow need to fetch data beyond the event context?</p>
+      <div class="option-group" id="data-options">
+        <label class="option-card">
+          <input type="radio" name="needs-data" value="no">
+          <div class="option-info">
+            <div class="option-label">No</div>
+            <div class="option-desc">The workflow has everything it needs from the event context</div>
+          </div>
+        </label>
+        <label class="option-card">
+          <input type="radio" name="needs-data" value="yes">
+          <div class="option-info">
+            <div class="option-label">Yes</div>
+            <div class="option-desc">It needs to fetch data first (API calls, file reads, etc.)</div>
+          </div>
+        </label>
+      </div>
+      <div class="conditional-field" id="data-description-field">
+        <label for="data-description">Describe what data it needs:</label>
+        <textarea class="text-area" id="data-description" placeholder="e.g., Fetch the latest release from an upstream GitHub repo and compare with local version…"></textarea>
+      </div>
+      <div class="step-nav">
+        <button class="btn btn-secondary" id="prev-4">← Back</button>
+        <button class="btn btn-primary" id="next-4" disabled>Generate →</button>
+      </div>
+    </section>
+
+    <!-- Step 5: Preview -->
+    <section class="wizard-step" id="step-5">
+      <h2 class="step-title">Preview &amp; Download</h2>
+      <p class="step-description">Your generated workflow prompt is ready.</p>
+      <div class="preview-container">
+        <div class="preview-header">
+          <h3 id="preview-filename">workflow.md</h3>
+          <div class="preview-actions">
+            <button class="btn btn-secondary btn-sm" id="btn-copy">📋 Copy</button>
+            <button class="btn btn-primary btn-sm" id="btn-download">⬇ Download .md</button>
+          </div>
+        </div>
+        <div class="preview-code" id="preview-code"></div>
+      </div>
+      <div class="tips-panel" id="tips-panel"></div>
+      <div class="step-nav">
+        <button class="btn btn-secondary" id="prev-5">← Back to edit</button>
+        <div></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      Built from real-world analysis of GitHub Copilot agentic workflows.
+    </div>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+  <script src="generator.js"></script>
+</body>
+</html>

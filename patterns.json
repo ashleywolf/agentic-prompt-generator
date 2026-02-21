@@ -1,0 +1,436 @@
+{
+  "metadata": {
+    "generated_at": "2026-02-21T06:22:55.600858Z",
+    "source_repos": 269,
+    "active_workflows": 246,
+    "total_workflows": 679
+  },
+  "archetypes": [
+    {
+      "id": "issue-triage",
+      "label": "Issue Triage",
+      "description": "Classify and label new issues",
+      "success_rate": 0.72,
+      "count": 42,
+      "recommended_triggers": [
+        {
+          "type": "issues",
+          "config": {
+            "types": [
+              "opened"
+            ]
+          }
+        },
+        {
+          "type": "workflow_dispatch",
+          "config": {}
+        }
+      ],
+      "recommended_safe_outputs": [
+        "issues"
+      ],
+      "recommended_tools": [
+        "add-comment",
+        "add-label"
+      ],
+      "timeout_minutes": 30,
+      "prompt_style": "role-steps",
+      "size_range_bytes": [
+        3000,
+        7000
+      ],
+      "top_repos": [
+        {
+          "name": "appwrite/appwrite",
+          "stars": 54898
+        },
+        {
+          "name": "apolloconfig/apollo",
+          "stars": 29779
+        },
+        {
+          "name": "frankbria/ralph-claude-code",
+          "stars": 7097
+        },
+        {
+          "name": "evcc-io/evcc",
+          "stars": 6169
+        },
+        {
+          "name": "apache/cloudstack",
+          "stars": 2800
+        },
+        {
+          "name": "github/copilot-sdk",
+          "stars": 7254
+        }
+      ],
+      "tips": [
+        "Most reliable archetype",
+        "Include explicit label taxonomy",
+        "Add examples of good vs bad classifications"
+      ],
+      "anti_patterns": [
+        "Don't try to auto-fix issues",
+        "Don't create sub-issues automatically"
+      ]
+    },
+    {
+      "id": "code-improvement",
+      "label": "Code Improvement",
+      "description": "Daily code quality improvements",
+      "success_rate": 0.65,
+      "count": 60,
+      "recommended_triggers": [
+        {
+          "type": "schedule",
+          "config": {
+            "cron": "0 9 * * 1-5"
+          }
+        },
+        {
+          "type": "workflow_dispatch",
+          "config": {}
+        }
+      ],
+      "recommended_safe_outputs": [
+        "pull-requests",
+        "contents"
+      ],
+      "recommended_tools": [
+        "create-pull-request",
+        "commit-files"
+      ],
+      "timeout_minutes": 30,
+      "prompt_style": "phase-based",
+      "size_range_bytes": [
+        5000,
+        12000
+      ],
+      "top_repos": [
+        {
+          "name": "BabylonJS/Babylon.js",
+          "stars": 25113
+        },
+        {
+          "name": "ohcnetwork/care_fe",
+          "stars": 606
+        },
+        {
+          "name": "kaito-project/aikit",
+          "stars": 509
+        },
+        {
+          "name": "devantler-tech/ksail",
+          "stars": 130
+        },
+        {
+          "name": "lablup/backend.ai-webui",
+          "stars": 125
+        },
+        {
+          "name": "github/gh-aw",
+          "stars": 3356
+        }
+      ],
+      "tips": [
+        "Use phase-based structure: Analyze \u2192 Plan \u2192 Implement \u2192 Validate",
+        "Always include a validation step",
+        "Target one type of improvement per workflow"
+      ],
+      "anti_patterns": [
+        "Don't combine test improvement + code simplification",
+        "Scope each workflow to a single improvement type"
+      ]
+    },
+    {
+      "id": "status-report",
+      "label": "Status Report",
+      "description": "Generate periodic status or activity reports",
+      "success_rate": 0.7,
+      "count": 85,
+      "recommended_triggers": [
+        {
+          "type": "schedule",
+          "config": {
+            "cron": "0 9 * * 1-5"
+          }
+        },
+        {
+          "type": "issues",
+          "config": {
+            "types": [
+              "opened"
+            ]
+          }
+        }
+      ],
+      "recommended_safe_outputs": [
+        "issues"
+      ],
+      "recommended_tools": [
+        "create-issue"
+      ],
+      "timeout_minutes": 30,
+      "prompt_style": "template-driven",
+      "size_range_bytes": [
+        2000,
+        5000
+      ],
+      "top_repos": [
+        {
+          "name": "dotnet/maui",
+          "stars": 23180
+        },
+        {
+          "name": "dotnet/aspire",
+          "stars": 5457
+        },
+        {
+          "name": "erigontech/erigon",
+          "stars": 3531
+        },
+        {
+          "name": "apache/cloudstack",
+          "stars": 2800
+        },
+        {
+          "name": "foxminchan/BookWorm",
+          "stars": 475
+        },
+        {
+          "name": "github/gh-aw",
+          "stars": 3356
+        }
+      ],
+      "tips": [
+        "Include an explicit output template",
+        "Template-driven prompts ensure consistent formatting",
+        "Scope to specific time windows to avoid hallucination"
+      ],
+      "anti_patterns": [
+        "Don't try to analyze too many data sources in one report"
+      ]
+    },
+    {
+      "id": "dependency-monitor",
+      "label": "Dependency Monitor",
+      "description": "Track upstream changes and sync",
+      "success_rate": 0.64,
+      "count": 26,
+      "recommended_triggers": [
+        {
+          "type": "schedule",
+          "config": {
+            "cron": "0 9 * * 1-5"
+          }
+        },
+        {
+          "type": "workflow_dispatch",
+          "config": {}
+        }
+      ],
+      "recommended_safe_outputs": [
+        "issues",
+        "pull-requests"
+      ],
+      "recommended_tools": [
+        "create-issue",
+        "create-pull-request"
+      ],
+      "timeout_minutes": 30,
+      "prompt_style": "checklist",
+      "size_range_bytes": [
+        3000,
+        6000
+      ],
+      "top_repos": [
+        {
+          "name": "llm-d/llm-d",
+          "stars": 2516
+        },
+        {
+          "name": "javaevolved/javaevolved.github.io",
+          "stars": 152
+        },
+        {
+          "name": "llm-d/llm-d-kv-cache",
+          "stars": 103
+        },
+        {
+          "name": "learntocloud/learn-to-cloud-app",
+          "stars": 93
+        },
+        {
+          "name": "llm-d/llm-d-inference-sim",
+          "stars": 87
+        },
+        {
+          "name": "github/gh-aw-firewall",
+          "stars": 34
+        }
+      ],
+      "tips": [
+        "Use pre-steps to fetch upstream data",
+        "Checklist-driven prompts work well for monitoring",
+        "Pin to specific sources to avoid drift"
+      ],
+      "anti_patterns": [
+        "Don't try to auto-merge upstream changes"
+      ]
+    },
+    {
+      "id": "content-moderation",
+      "label": "Content Moderation",
+      "description": "Check PRs/issues for spam or policy violations",
+      "success_rate": 0.75,
+      "count": 14,
+      "recommended_triggers": [
+        {
+          "type": "pull_request",
+          "config": {
+            "types": [
+              "opened"
+            ]
+          }
+        },
+        {
+          "type": "issues",
+          "config": {
+            "types": [
+              "opened"
+            ]
+          }
+        }
+      ],
+      "recommended_safe_outputs": [
+        "issues",
+        "pull-requests"
+      ],
+      "recommended_tools": [
+        "add-comment",
+        "add-label"
+      ],
+      "timeout_minutes": 15,
+      "prompt_style": "role-rules",
+      "size_range_bytes": [
+        4000,
+        7000
+      ],
+      "top_repos": [
+        {
+          "name": "f/prompts.chat",
+          "stars": 145906
+        },
+        {
+          "name": "ohcnetwork/care_fe",
+          "stars": 606
+        },
+        {
+          "name": "rysweet/amplihack",
+          "stars": 21
+        },
+        {
+          "name": "almazom/agent-test-demo",
+          "stars": 1
+        },
+        {
+          "name": "sujithq/sujithq.github.io",
+          "stars": 1
+        },
+        {
+          "name": "github/gh-aw",
+          "stars": 3356
+        }
+      ],
+      "tips": [
+        "Heavy on rules \u2014 define exactly what constitutes a violation",
+        "Include false-positive guidance",
+        "Pair with human review for destructive actions"
+      ],
+      "anti_patterns": [
+        "Don't auto-close issues without human review"
+      ]
+    },
+    {
+      "id": "custom",
+      "label": "Custom",
+      "description": "Describe your own workflow",
+      "success_rate": 0.62,
+      "count": 452,
+      "recommended_triggers": [],
+      "recommended_safe_outputs": [],
+      "recommended_tools": [],
+      "timeout_minutes": 30,
+      "prompt_style": "role-steps",
+      "size_range_bytes": [
+        3000,
+        8000
+      ],
+      "top_repos": [],
+      "tips": [
+        "Keep your prompt between 3-8KB",
+        "One clear job per workflow",
+        "Include a Rules section for constraints"
+      ],
+      "anti_patterns": [
+        "Scope too broad = guaranteed failure"
+      ]
+    }
+  ],
+  "anti_patterns": [
+    {
+      "pattern": "q",
+      "success_rate": 0.0,
+      "repos_seen": 6,
+      "reason": "Unscoped single-letter workflow name with no clear purpose"
+    },
+    {
+      "pattern": "pr-fix",
+      "success_rate": 0.021,
+      "repos_seen": 6,
+      "reason": "Too many steps \u2014 diagnose + fix code is too ambitious for an agent"
+    },
+    {
+      "pattern": "plan",
+      "success_rate": 0.056,
+      "repos_seen": 8,
+      "reason": "Open-ended planning without constraints produces nothing useful"
+    },
+    {
+      "pattern": "sdk-consistency-review",
+      "success_rate": 0.15,
+      "repos_seen": 4,
+      "reason": "Cross-SDK consistency checks require too broad a context window"
+    },
+    {
+      "pattern": "ci-doctor",
+      "success_rate": 0.186,
+      "repos_seen": 16,
+      "reason": "CI logs are too noisy and variable for reliable diagnosis"
+    },
+    {
+      "pattern": "over-ambitious-scope",
+      "success_rate": null,
+      "repos_seen": null,
+      "reason": "If you cannot describe the job in one sentence, split it"
+    }
+  ],
+  "config_defaults": {
+    "model": null,
+    "timeout_by_trigger": {
+      "issues": 15,
+      "schedule": 30,
+      "workflow_dispatch": 30,
+      "push": 15,
+      "slash_command": 15,
+      "workflow_run": 15,
+      "discussion": 15,
+      "pull_request": 15
+    },
+    "prompt_size_sweet_spot": [
+      3000,
+      8000
+    ]
+  }
+}
