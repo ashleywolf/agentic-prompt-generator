@@ -227,7 +227,6 @@
     goToStep(5);
     showPreview(generatedMd);
     showNextSteps('workflow');
-    showTips(answers.archetype);
     var name = workflowName(answers.archetype, answers.customDescription);
     document.getElementById('preview-filename').textContent = name + '.md';
     document.getElementById('btn-download').style.display = '';
@@ -336,21 +335,7 @@
         body = buildCustom(answers, label);
     }
 
-    // Append tips as best practices section
-    var tipsSection = buildTipsSection(answers.archetype);
-
-    return fm + body + tipsSection;
-  }
-
-  function buildTipsSection(archetypeId) {
-    var arch = getArchetype(archetypeId);
-    if (!arch || !arch.tips || !arch.tips.length) return '';
-
-    var section = '\n## Best Practices\n\n';
-    arch.tips.forEach(function (tip) {
-      section += '- ' + tip + '\n';
-    });
-    return section;
+    return fm + body;
   }
 
   function buildTriggerYaml(triggers) {
@@ -413,15 +398,6 @@
     if (answers.needsData && answers.dataDescription) {
       prompt += '- External data needed: ' + answers.dataDescription + '\n';
       prompt += '- Add a pre-step to fetch this data before the agent runs\n';
-    }
-
-    // Include tips as guidance
-    var arch = getArchetype(answers.archetype);
-    if (arch && arch.tips && arch.tips.length) {
-      prompt += '\nBest practices to follow:\n';
-      arch.tips.forEach(function (tip) {
-        prompt += '- ' + tip + '\n';
-      });
     }
 
     prompt += '\nThe workflow should be saved to .github/workflows/' + name + '.md';
@@ -810,57 +786,6 @@
 
   function escapeHtml(str) {
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
-
-  // ── Tips ───────────────────────────────────────────────────────────────────
-  function showTips(archetypeId) {
-    var panel = document.getElementById('tips-panel');
-    var arch = getArchetype(archetypeId);
-    if (!arch) {
-      panel.innerHTML = '';
-      return;
-    }
-
-    var html = '<h3>Tips for ' + arch.label + '</h3>';
-
-    // Success rate badge
-    if (arch.success_rate !== null) {
-      var rate = Math.round(arch.success_rate * 100);
-      var level = rate >= 75 ? 'high' : (rate >= 50 ? 'medium' : 'low');
-      html += '<div class="success-badge ' + level + '">' +
-        (level === 'high' ? '✓' : level === 'medium' ? '~' : '✗') +
-        ' ' + rate + '% success rate across public repos</div>';
-    }
-
-    // Tips
-    if (arch.tips && arch.tips.length) {
-      arch.tips.forEach(function (tip) {
-        html += '<div class="tip-item good"><span class="tip-icon">✓</span> ' + escapeHtml(tip) + '</div>';
-      });
-    }
-
-    // Anti-patterns
-    if (arch.anti_patterns && arch.anti_patterns.length) {
-      arch.anti_patterns.forEach(function (ap) {
-        html += '<div class="tip-item warn"><span class="tip-icon">⚠</span> ' + escapeHtml(ap) + '</div>';
-      });
-    }
-
-    // Global anti-pattern warnings
-    if (patterns && patterns.anti_patterns) {
-      var relevant = patterns.anti_patterns.filter(function (ap) {
-        if (archetypeId === 'code-improvement' && ap.pattern === 'pr-fix') return true;
-        if (ap.pattern === 'over-ambitious-scope') return true;
-        return false;
-      });
-      relevant.forEach(function (ap) {
-        var rate = ap.success_rate !== null ? ' (' + Math.round(ap.success_rate * 100) + '% success rate)' : '';
-        html += '<div class="tip-item bad"><span class="tip-icon">✗</span> Anti-pattern: ' +
-          escapeHtml(ap.reason) + rate + '</div>';
-      });
-    }
-
-    panel.innerHTML = html;
   }
 
   // ── Clipboard & download ───────────────────────────────────────────────────

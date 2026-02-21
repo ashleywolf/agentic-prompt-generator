@@ -542,67 +542,6 @@ a:hover {
 .preview-code .md-bold     { color: #f0f6fc; font-weight: 600; }
 .preview-code .md-number   { color: var(--accent-blue); }
 
-/* Tips panel */
-.tips-panel {
-  margin-top: 1.5rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 1.25rem;
-}
-.tips-panel h3 {
-  font-size: 0.92rem;
-  color: #f0f6fc;
-  margin-bottom: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-.tips-panel h3::before {
-  content: '💡';
-}
-
-.tip-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  padding: 0.45rem 0;
-  font-size: 0.84rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
-}
-.tip-item .tip-icon {
-  flex-shrink: 0;
-  font-size: 0.75rem;
-  margin-top: 3px;
-}
-.tip-item.good .tip-icon { color: var(--success); }
-.tip-item.warn .tip-icon { color: var(--warning); }
-.tip-item.bad  .tip-icon { color: var(--danger); }
-
-.success-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.2rem 0.6rem;
-  border-radius: 12px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  margin-bottom: 0.75rem;
-}
-.success-badge.high {
-  background: rgba(63, 185, 80, 0.15);
-  color: var(--success);
-}
-.success-badge.medium {
-  background: rgba(210, 153, 34, 0.15);
-  color: var(--warning);
-}
-.success-badge.low {
-  background: rgba(248, 81, 73, 0.15);
-  color: var(--danger);
-}
-
 /* Toast */
 .toast {
   position: fixed;
