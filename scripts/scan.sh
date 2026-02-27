@@ -400,6 +400,14 @@ fi
 
 # ─── Write final output ────────────────────────────────────────────
 echo ""
+echo "Saving historical snapshot..."
+HISTORY_DIR="$OUTDIR/scan-history"
+mkdir -p "$HISTORY_DIR"
+TIMESTAMP=$(date +%Y-%m-%dT%H%M%S)
+cp /tmp/aw-scan/analyzed.json "$HISTORY_DIR/scan-${TIMESTAMP}.json"
+echo "  ✅ Saved snapshot to $HISTORY_DIR/scan-${TIMESTAMP}.json"
+
+echo ""
 echo "Writing results to $OUTDIR/scan-results.json..."
 
 python3 - "$OUTDIR" << 'PYEOF'

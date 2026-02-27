@@ -24,6 +24,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SCAN_DATA = REPO_ROOT / "data" / "scan-results.json"
 PATTERNS_FILE = REPO_ROOT / "patterns.json"
 REPORT_FILE = REPO_ROOT / "data" / "analysis-report.json"
+HISTORY_DIR = REPO_ROOT / "data" / "scan-history"
 
 SKIP_LOGS = "--skip-logs" in sys.argv
 MAX_LOG_REPOS = 999
@@ -118,6 +119,165 @@ def categorize_log(log_text):
     return categories if categories else ["unknown"]
 
 
+# ── Historical / Temporal Helpers ───────────────────────────────
+
+def load_previous_scan():
+    """Load the most recent previous scan from data/scan-history/, if any."""
+    if not HISTORY_DIR.exists():
+        return None, None
+    snapshots = sorted(HISTORY_DIR.glob("scan-*.json"))
+    if len(snapshots) < 2:
+        # Need at least 2 snapshots (current + previous) for comparison
+        return None, None
+    # The latest snapshot is the current scan; use the second-to-last
+    prev_path = snapshots[-2]
+    try:
+        with open(prev_path) as f:
+            data = json.load(f)
+        # Extract timestamp from filename: scan-YYYY-MM-DDTHHMMSS.json
+        ts_str = prev_path.stem.replace("scan-", "")
+        return data, ts_str
+    except Exception:
+        return None, None
+
+
+def detect_cross_scan_degradation(current_repos, previous_repos):
+    """Compare current vs previous scan to find workflows that degraded between scans."""
+    degraded = []
+    for repo_key, repo in current_repos.items():
+        prev_repo = previous_repos.get(repo_key)
+        if not prev_repo:
+            continue
+        prev_wfs = {w.get("name", ""): w for w in prev_repo.get("workflows", [])}
+        for wf in repo.get("workflows", []):
+            wf_name = wf.get("name", "")
+            prev_wf = prev_wfs.get(wf_name)
+            if not prev_wf:
+                continue
+            curr_rate = parse_success_rate(wf.get("success_rate"))
+            prev_rate = parse_success_rate(prev_wf.get("success_rate"))
+            if curr_rate is None or prev_rate is None:
+                continue
+            if prev_rate >= 0.6 and curr_rate < prev_rate - 0.25:
+                degraded.append({
+                    "repo": repo_key,
+                    "workflow": wf_name,
+                    "previous_rate": round(prev_rate, 3),
+                    "current_rate": round(curr_rate, 3),
+                    "delta": round(curr_rate - prev_rate, 3),
+                })
+    degraded.sort(key=lambda x: x["delta"])
+    return degraded
+
+
+def compute_adoption_velocity(current_repos, previous_repos):
+    """Track new repos and workflows appearing between scans."""
+    prev_repo_set = set(previous_repos.keys())
+    curr_repo_set = set(current_repos.keys())
+
+    new_repos = sorted(curr_repo_set - prev_repo_set)
+    removed_repos = sorted(prev_repo_set - curr_repo_set)
+
+    new_workflows = []
+    disappeared_workflows = []
+
+    for repo_key in curr_repo_set & prev_repo_set:
+        prev_wf_names = {w.get("name", "") for w in previous_repos[repo_key].get("workflows", [])}
+        curr_wf_names = {w.get("name", "") for w in current_repos[repo_key].get("workflows", [])}
+        for wf_name in curr_wf_names - prev_wf_names:
+            new_workflows.append({"repo": repo_key, "workflow": wf_name})
+        for wf_name in prev_wf_names - curr_wf_names:
+            disappeared_workflows.append({"repo": repo_key, "workflow": wf_name})
+
+    return {
+        "new_repos": new_repos,
+        "removed_repos": removed_repos,
+        "new_repos_count": len(new_repos),
+        "removed_repos_count": len(removed_repos),
+        "new_workflows": new_workflows,
+        "disappeared_workflows": disappeared_workflows,
+        "new_workflows_count": len(new_workflows),
+        "disappeared_workflows_count": len(disappeared_workflows),
+    }
+
+
+def compute_temporal_trends():
+    """Compute week-over-week growth from historical scan snapshots."""
+    if not HISTORY_DIR.exists():
+        return None
+    snapshots = sorted(HISTORY_DIR.glob("scan-*.json"))
+    if len(snapshots) < 2:
+        return None
+
+    timeline = []
+    for snap_path in snapshots:
+        try:
+            with open(snap_path) as f:
+                data = json.load(f)
+            ts_str = snap_path.stem.replace("scan-", "")
+            repo_count = len(data)
+            wf_count = sum(len(r.get("workflows", [])) for r in data.values())
+            timeline.append({
+                "timestamp": ts_str,
+                "repos": repo_count,
+                "workflows": wf_count,
+            })
+        except Exception:
+            continue
+
+    if len(timeline) < 2:
+        return None
+
+    latest = timeline[-1]
+    previous = timeline[-2]
+    repo_growth = latest["repos"] - previous["repos"]
+    wf_growth = latest["workflows"] - previous["workflows"]
+    repo_growth_pct = round(repo_growth / previous["repos"] * 100, 1) if previous["repos"] > 0 else 0
+    wf_growth_pct = round(wf_growth / previous["workflows"] * 100, 1) if previous["workflows"] > 0 else 0
+
+    return {
+        "snapshots_available": len(timeline),
+        "latest": latest,
+        "previous": previous,
+        "repo_growth": repo_growth,
+        "repo_growth_pct": repo_growth_pct,
+        "workflow_growth": wf_growth,
+        "workflow_growth_pct": wf_growth_pct,
+        "timeline": timeline,
+    }
+
+
+def build_what_changed_summary(adoption, cross_scan_degraded, temporal):
+    """Build a human-readable 'What Changed This Week' summary."""
+    lines = []
+
+    if adoption:
+        if adoption["new_repos_count"]:
+            lines.append(f"📈 {adoption['new_repos_count']} new repo(s) adopted agentic workflows")
+            for r in adoption["new_repos"][:5]:
+                lines.append(f"   + {r}")
+        if adoption["removed_repos_count"]:
+            lines.append(f"📉 {adoption['removed_repos_count']} repo(s) removed")
+        if adoption["new_workflows_count"]:
+            lines.append(f"🆕 {adoption['new_workflows_count']} new workflow(s) added in existing repos")
+        if adoption["disappeared_workflows_count"]:
+            lines.append(f"🗑️  {adoption['disappeared_workflows_count']} workflow(s) disappeared")
+
+    if temporal:
+        lines.append(f"📊 Repo growth: {temporal['repo_growth']:+d} ({temporal['repo_growth_pct']:+.1f}%)")
+        lines.append(f"📊 Workflow growth: {temporal['workflow_growth']:+d} ({temporal['workflow_growth_pct']:+.1f}%)")
+
+    if cross_scan_degraded:
+        lines.append(f"⚠️  {len(cross_scan_degraded)} workflow(s) degraded since last scan:")
+        for d in cross_scan_degraded[:5]:
+            lines.append(f"   {d['repo']}/{d['workflow']}: {d['previous_rate']*100:.0f}% → {d['current_rate']*100:.0f}%")
+
+    if not lines:
+        lines.append("No previous scan data available for comparison.")
+
+    return lines
+
+
 # ── Main Analysis ───────────────────────────────────────────────────
 
 def main():
@@ -149,8 +309,16 @@ def main():
 
     print(f"  Flattened: {len(all_workflows)} workflow entries")
 
+    # ── 0. Load previous scan for cross-scan comparison ──────────
+    print("\n  [0/10] Loading previous scan data...")
+    prev_scan_data, prev_scan_ts = load_previous_scan()
+    if prev_scan_data:
+        print(f"    Previous scan found: {prev_scan_ts}")
+    else:
+        print("    No previous scan available for comparison")
+
     # ── 1. Trigger combo analysis ──────────────────────────────────
-    print("\n  [1/8] Trigger combo analysis...")
+    print("\n  [1/10] Trigger combo analysis...")
     combo_stats = defaultdict(lambda: {"successes": 0, "total": 0, "repos": set()})
 
     for wf in all_workflows:
@@ -190,7 +358,7 @@ def main():
     print(f"    Found {len(trigger_combos)} unique trigger combinations")
 
     # ── 2. Archetype health ────────────────────────────────────────
-    print("  [2/8] Archetype health...")
+    print("  [2/10] Archetype health...")
     arch_stats = defaultdict(lambda: {"successes": 0, "total": 0, "workflows": 0, "repos": set()})
 
     for wf in all_workflows:
@@ -238,7 +406,7 @@ def main():
     print(f"    {len(archetype_health)} archetypes analyzed")
 
     # ── 3. Engine analysis ─────────────────────────────────────────
-    print("  [3/8] Engine analysis...")
+    print("  [3/10] Engine analysis...")
     engine_stats = defaultdict(lambda: {"successes": 0, "total": 0, "workflows": 0})
 
     for wf in all_workflows:
@@ -262,7 +430,7 @@ def main():
     print(f"    {len(engine_analysis)} engines found")
 
     # ── 4. Prompt feature correlation ──────────────────────────────
-    print("  [4/8] Prompt feature correlation...")
+    print("  [4/10] Prompt feature correlation...")
     feature_stats = defaultdict(lambda: {"with": {"s": 0, "t": 0}, "without": {"s": 0, "t": 0}})
 
     for wf in all_workflows:
@@ -304,7 +472,7 @@ def main():
     print(f"    {len(feature_correlation)} features analyzed")
 
     # ── 5. Degradation detection ───────────────────────────────────
-    print("  [5/8] Degradation detection...")
+    print("  [5/10] Degradation detection...")
     degraded = []
     for wf in all_workflows:
         runs = wf.get("recent_runs_detail", [])
@@ -328,7 +496,7 @@ def main():
     print(f"    {len(degraded)} degraded workflows found")
 
     # ── 6. New pattern discovery ───────────────────────────────────
-    print("  [6/8] New pattern discovery...")
+    print("  [6/10] New pattern discovery...")
     name_counter = Counter()
     name_success = defaultdict(lambda: {"s": 0, "t": 0, "repos": set()})
 
@@ -371,7 +539,7 @@ def main():
     log_samples = defaultdict(list)
 
     if not SKIP_LOGS:
-        print("  [7/8] Failure log analysis (fetching logs)...")
+        print("  [7/10] Failure log analysis (fetching logs)...")
         failed_runs = []
         for wf in all_workflows:
             for run in wf.get("recent_runs_detail", []):
@@ -420,7 +588,7 @@ def main():
         sys.stdout.write("\n")
         print(f"    Fetched {logs_fetched} logs from {len(repos_processed)} repos")
     else:
-        print("  [7/8] Failure log analysis (skipped — --skip-logs)")
+        print("  [7/10] Failure log analysis (skipped — --skip-logs)")
         # Estimate from run data
         for wf in all_workflows:
             arch = classify_workflow(wf)
@@ -449,8 +617,34 @@ def main():
     }
     print(f"    Failure categories: {dict(failure_categories.most_common())}")
 
-    # ── 8. Recommendations ─────────────────────────────────────────
-    print("  [8/8] Generating recommendations...")
+    # ── 8. Cross-scan degradation & adoption velocity ─────────────
+    print("  [8/10] Cross-scan degradation & adoption velocity...")
+    cross_scan_degraded = []
+    adoption = None
+    if prev_scan_data:
+        cross_scan_degraded = detect_cross_scan_degradation(repos, prev_scan_data)
+        adoption = compute_adoption_velocity(repos, prev_scan_data)
+        print(f"    Cross-scan degraded: {len(cross_scan_degraded)} workflows")
+        if adoption:
+            print(f"    New repos: {adoption['new_repos_count']}, "
+                  f"removed: {adoption['removed_repos_count']}, "
+                  f"new workflows: {adoption['new_workflows_count']}, "
+                  f"disappeared: {adoption['disappeared_workflows_count']}")
+    else:
+        print("    Skipped (no previous scan)")
+
+    # ── 9. Temporal trends ─────────────────────────────────────────
+    print("  [9/10] Temporal trends...")
+    temporal = compute_temporal_trends()
+    if temporal:
+        print(f"    {temporal['snapshots_available']} snapshots, "
+              f"repo growth: {temporal['repo_growth']:+d} ({temporal['repo_growth_pct']:+.1f}%), "
+              f"workflow growth: {temporal['workflow_growth']:+d} ({temporal['workflow_growth_pct']:+.1f}%)")
+    else:
+        print("    Skipped (insufficient history)")
+
+    # ── 10. Recommendations ────────────────────────────────────────
+    print("  [10/10] Generating recommendations...")
     recommendations = []
 
     # Trigger-based recommendations
@@ -490,7 +684,20 @@ def main():
             "data": d
         })
 
+    # Cross-scan degradation alerts
+    for d in cross_scan_degraded:
+        recommendations.append({
+            "type": "cross_scan_degradation",
+            "message": f"Workflow '{d['workflow']}' in {d['repo']} degraded since last scan: {d['previous_rate']*100:.0f}% → {d['current_rate']*100:.0f}%",
+            "data": d
+        })
+
     print(f"    {len(recommendations)} recommendations generated")
+
+    # ── Build "What Changed This Week" summary ───────────────────
+    what_changed = build_what_changed_summary(adoption, cross_scan_degraded, temporal)
+    for line in what_changed:
+        print(f"    {line}")
 
     # ── Build report ───────────────────────────────────────────────
     report = {
@@ -510,6 +717,10 @@ def main():
         "failure_analysis": failure_analysis,
         "degraded_workflows": degraded[:20],
         "new_patterns": new_patterns[:20],
+        "cross_scan_degradation": cross_scan_degraded[:20],
+        "adoption_velocity": adoption,
+        "temporal_trends": temporal,
+        "what_changed_this_week": what_changed,
         "recommendations": recommendations,
     }
 
